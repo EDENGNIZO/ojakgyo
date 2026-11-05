@@ -1,5 +1,5 @@
 // 앱 화면만 저장해 두고 인터넷이 끊겨도 열리게 한다. /api 는 절대 캐시하지 않는다.
-const CACHE = 'findme-v29';
+const CACHE = 'findme-v30';
 const SHELL = ['/', '/index.html', '/style.css', '/icon.svg', '/manifest.webmanifest',
   '/js/app.js', '/js/api.js', '/js/box.js', '/js/crypto.js', '/js/map.js', '/js/ui.js', '/js/write.js', '/js/human.js', '/js/recovery.js', '/js/theme.js', '/js/kbd.js'];
 

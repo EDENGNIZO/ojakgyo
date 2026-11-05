@@ -820,6 +820,10 @@ document.addEventListener('click', (e) => {
   const b = e.target.closest?.('[data-kbd-open]');
   if (b) openKbd(b);
 });
+// 링크를 눌러도 쓰던 칸에서 커서가 빠지지 않게 한다. 그래야 자판이 켜질 때 그 칸을 놓았다가 다시 잡아 기기 자판을 내릴 수 있다
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest?.('[data-kbd-open]')) e.preventDefault();
+});
 try {
   if (sessionStorage.getItem('findme.kbd') === '1') openKbd(null);
 } catch {}

@@ -94,6 +94,10 @@ let shift = false;
 let layer = 'ko';
 let observer = null;
 
+// 화면에 보이는 칸인지. 닫힌 <details> 안의 칸은 사파리에서 offsetParent가 남아 있어 따로 본다
+const shown = (el) =>
+  !el.closest('details:not([open]) > :not(summary)') && (el.checkVisibility ? el.checkVisibility() : !!el.offsetParent);
+
 // 이 자판으로 쓸 칸: 글자 칸이면서 숫자 자판 표시(inputmode)가 없는 것. 초대 코드처럼 영문을 쓰는 칸은 data-nokbd로 뺀다
 const fits = (el) =>
   el instanceof HTMLElement &&
@@ -152,7 +156,21 @@ function build() {
   // 자판을 눌러도 글자 칸에서 커서가 빠져나가지 않게
   panel.addEventListener('pointerdown', (e) => e.preventDefault());
   panel.addEventListener('mousedown', (e) => e.preventDefault());
-  panel.addEventListener('click', onKey);
+  // 손가락은 뗄 때 바로 쓴다. 꾹 오래 눌러도 써지게 (아이폰·안드로이드는 오래 누르면 click을 보내지 않는다)
+  // 손가락 뒤에 따라오는 click은 막는다. 닫기로 자판이 사라진 자리 아래의 버튼이 눌리지 않게
+  let touchedAt = 0;
+  if ('PointerEvent' in window) {
+    panel.addEventListener('pointerup', (e) => {
+      if (e.pointerType === 'mouse') return;
+      touchedAt = Date.now();
+      onKey(e);
+    });
+    panel.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+  }
+  panel.addEventListener('click', (e) => {
+    if (Date.now() - touchedAt > 800) onKey(e); // 마우스·키보드로 누른 것 (손가락은 위에서 이미 썼다)
+  });
+  panel.addEventListener('contextmenu', (e) => e.preventDefault());
   document.body.append(panel);
   draw();
 }
@@ -230,7 +248,7 @@ function enter(el) {
   const form = el.form;
   if (!form) return;
   const items = [...form.elements].filter(
-    (x) => x.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select') && !x.disabled && x.offsetParent
+    (x) => x.matches('input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select') && !x.disabled && shown(x)
   );
   const next = items[items.indexOf(el) + 1];
   if (next) next.focus();
@@ -322,13 +340,23 @@ export function enable(from) {
   }
   if (!from) return;
   const scope = from.closest('form, section') || document;
-  const all = [...scope.querySelectorAll(FIELD)].filter((el) => fits(el) && el.offsetParent);
+  const all = [...scope.querySelectorAll(FIELD)].filter((el) => fits(el) && shown(el));
   const before = all.filter((el) => el.compareDocumentPosition(from) & Node.DOCUMENT_POSITION_FOLLOWING);
-  const el = all.find((x) => !x.value) || before.at(-1) || all[0];
+  // 쓰던 칸이 있으면 그 칸, 없으면 이 양식의 빈 칸, 그것도 없으면 링크 바로 앞 칸
+  const was = document.activeElement;
+  const typing = was instanceof HTMLElement && was.matches('input, textarea');
+  const el = (typing && all.includes(was) ? was : null) || all.find((x) => !x.value) || before.at(-1) || all[0];
   if (!el) return;
   target = el;
-  el.focus({ preventScroll: true });
   show();
+  if (typing && matchMedia('(pointer: coarse)').matches) {
+    // 휴대폰에서 기기 자판이 떠 있던 칸: 먼저 놓아서 기기 자판을 내리고, 다 내려간 뒤에 다시 잡는다.
+    // 아이폰은 잡힌 칸의 inputmode 바뀜을 보지 않고, 놓자마자 다시 잡으면 기기 자판을 그대로 둔다
+    was.blur();
+    setTimeout(() => {
+      if (on && target === el && el.isConnected && document.activeElement !== el) el.focus({ preventScroll: true });
+    }, 350);
+  } else if (document.activeElement !== el) el.focus({ preventScroll: true });
 }
 
 export function disable() {
