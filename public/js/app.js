@@ -110,33 +110,63 @@ async function tell() {
   copySite();
 }
 
-// "find me in korea"가 붙으며 findmeinkorea.com이 되는 팝업. 외우기 쉽게
+// 가운데 뜨는 작은 창 하나(주소 복사·후원). 바깥이나 [data-close]를 누르거나 Esc로 닫는다. 다른 화면으로 옮기면 닫힌다
 let popTimer;
-function sharePop(ok) {
-  $('#share-pop')?.remove();
+function openPop(inner, { ms = 0, label = '' } = {}) {
+  closePop();
   const el = document.createElement('div');
-  el.id = 'share-pop';
+  el.id = 'pop';
   el.className = 'pop';
   el.setAttribute('role', 'dialog');
-  el.setAttribute('aria-live', 'polite');
-  el.innerHTML = `
-    <div class="pop-box">
-      <p class="brand" role="img" aria-label="findmeinkorea.com"><span>find</span><i></i><span>me</span><i></i><span>in</span><i></i><span>korea</span><em>.com</em></p>
-      <p class="pop-msg">${ok ? '클립보드에 복사되었습니다!' : '복사할 수 없어요. 아래 주소를 길게 눌러 복사해 주세요.'}</p>
-      ${ok ? '' : `<p class="pop-url">${SITE_URL}</p>`}
-      <button type="button" class="btn small">닫기</button>
-    </div>`;
-  const close = () => {
-    clearTimeout(popTimer);
-    el.remove();
-  };
+  el.setAttribute('aria-modal', 'true');
+  if (label) el.setAttribute('aria-label', label);
+  el.innerHTML = `<div class="pop-box">${inner}</div>`;
   el.addEventListener('click', (e) => {
-    if (e.target === el || e.target.closest('button')) close();
+    if (e.target === el || e.target.closest('[data-close]')) closePop();
   });
   document.body.appendChild(el);
-  $('button', el).focus();
+  $('[data-close]', el)?.focus({ preventScroll: true });
+  if (ms) popTimer = setTimeout(closePop, ms);
+  return el;
+}
+function closePop() {
   clearTimeout(popTimer);
-  if (ok) popTimer = setTimeout(close, 4500);
+  $('#pop')?.remove();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closePop();
+});
+
+// "find me in korea"가 붙으며 findmeinkorea.com이 되는 팝업. 외우기 쉽게
+function sharePop(ok) {
+  openPop(
+    `<p class="brand" role="img" aria-label="findmeinkorea.com"><span>find</span><i></i><span>me</span><i></i><span>in</span><i></i><span>korea</span><em>.com</em></p>
+      <p class="pop-msg" aria-live="polite">${ok ? '클립보드에 복사되었습니다!' : '복사할 수 없어요. 아래 주소를 길게 눌러 복사해 주세요.'}</p>
+      ${ok ? '' : `<p class="pop-url">${SITE_URL}</p>`}
+      <button type="button" class="btn small" data-close>닫기</button>`,
+    { ms: ok ? 4500 : 0, label: '사이트 주소 복사' }
+  );
+}
+
+// ---------- 후원 ----------
+// 카카오페이 송금코드 링크와 그 링크를 QR로 만든 정적 그림(public/qr-kakaopay.svg). 링크를 바꾸면 QR도 다시 만든다.
+// 그냥 링크와 그림이라 새 스크립트·CSP 변경이 없다. 오작교 전설(까치들이 한 마리씩 모여 놓은 다리)에 빗대고, 대놓고 바라는 말은 쓰지 않는다
+const SUPPORT = { kakao: 'https://qr.kakaopay.com/Ej9NDsbHF', qr: '/qr-kakaopay.svg' };
+
+function supportPop() {
+  openPop(
+    `<div class="postcard">
+        <p class="kicker">까치 한 마리 보태기</p>
+        <h2 id="support-title">오작교는 까치들이 한 마리씩 모여 놓은 다리예요</h2>
+        <p>마음이 닿았다면 까치 한 마리를 보태 주세요. 금액은 자유예요.</p>
+        <a class="pc-stamp" href="${esc(SUPPORT.kakao)}" target="_blank" rel="noopener" aria-label="카카오페이 송금 QR 코드">
+          <img src="${esc(SUPPORT.qr)}" alt="" width="112" height="112"><span>카카오페이</span></a>
+        <p class="fine">PC에서는 폰 카메라로 QR을 찍으면 바로 열려요.</p>
+      </div>
+      <a class="btn primary wide" href="${esc(SUPPORT.kakao)}" target="_blank" rel="noopener">카카오페이로 보태기</a>
+      <button type="button" class="btn small ghost" data-close>닫기</button>`,
+    { label: '사이트 후원하기' }
+  );
 }
 
 async function home() {
@@ -146,7 +176,7 @@ async function home() {
       <h1>연락이 끊긴 그 사람도<br>나를 찾고 있을까요?</h1>
       <p class="kicker">1950년, 피난민들은 다리 난간과 벽에 쪽지를 붙였습니다.</p>
       <p class="lede">연락이 끊긴 친구, 첫사랑, 헤어진 가족에게 쪽지를 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다. 전쟁이 나도 쪽지는 남습니다.</p>
-      <p class="trust"><span>회원가입 없음</span> · <span>광고 없음</span> · <span>운영자도 못 읽음</span> · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
+      <p class="trust"><span>회원가입 없음</span> · <span>광고 없음</span></p>
     </section>
     <nav class="actions">
       <a class="btn primary big" href="#/find">나에게 남겨진 쪽지 확인</a>
@@ -185,12 +215,13 @@ async function home() {
       <p>"혹시 누가 나를 찾고 있을까?" 한 번 찾아보는 사람이 많을수록, 끊어진 인연이 다시 이어질 기회도 커져요.
         주소는 <b>find me in korea</b>, 네 단어를 붙여 쓰면 됩니다.</p>
       <div class="row2">
-        <button type="button" class="btn primary" data-tell>친구에게 알리기</button>
-        <button type="button" class="btn" id="copySite">주소 복사하기</button>
+        <button type="button" class="btn primary" id="copySite">주소 복사하기</button>
+        <button type="button" class="btn" id="supportSite">사이트 후원하기</button>
       </div>
     </section>
   `);
   $('#copySite').addEventListener('click', copySite);
+  $('#supportSite').addEventListener('click', supportPop);
   wireDemo();
   if (saved.length) peekNews(saved);
   document.querySelectorAll('[data-del]').forEach((b) =>
@@ -232,10 +263,12 @@ const SOURCE_URL = 'https://github.com/EDENGNIZO/ojakgyo';
 
 const DEMO_ANSWER = '왕만두';
 const FAQ = [
+  ['어떻게 활용하나요?', '전쟁이나 천재지변 시 국내 통신망이 두절되면, 인터넷이 되는 곳에서 오작교로 서로의 위치나 안부를 약속할 수 있어요.'],
   ['상대에게 미리 알려야 하나요?', '알려도 되고, 몰래 남겨 둬도 돼요. 상대가 언젠가 자기 이름과 생일로 찾으면 보여요.'],
   ['상대 생일을 정확히 몰라요.', '출생연도나 월·일만 알아도 남길 수 있어요. 생일을 전혀 몰라도 같이 다닌 학교나 전화번호를 적으면, 상대가 그것을 넣어 찾을 때 보여요.'],
   ['회원가입이 필요한가요?', '아니요. 이름과 생일, 둘만 아는 질문이면 충분해요.'],
   ['쪽지는 언제까지 남나요?', '지우기 전까지 계속 남아요. 만날 곳이 바뀌면 같은 쪽지에 이어서 남길 수 있어요.'],
+  ['보낸 쪽지를 거둘 수 있나요?', '네. 누군가 답을 맞혀 열기 전까지는, 쪽지를 남긴 기기에서 거둘 수 있어요. 거두면 흔적 없이 지워져요. 열린 뒤에는 거둘 수 없어요.'],
   ['폰을 잃어버리면요?', '다른 폰에서 이름과 생일로 다시 찾아 답을 넣으면 돼요.'],
   ['운영자는 쪽지를 볼 수 있나요?', '볼 수 없어요. 쪽지는 내 폰 안에서 잠긴 채로 서버에 가요. <a href="#/about">쪽지는 어떻게 지켜지나요?</a>'],
   ['전쟁이 나도 쪽지가 남나요?', '쪽지는 국내 메신저가 아니라 해외 사업자 Cloudflare의 서버에 암호문으로 보관돼요. 국내 전화와 메신저가 멈춰도 지워지지 않고, 인터넷이 닿는 곳이면 어디서든 열 수 있어요. 인터넷이 끊긴 곳에서는 열 수 없으니 만날 곳은 미리 정해 두세요.'],
@@ -320,23 +353,23 @@ function usesBlock() {
       <h2>다시 닿고 싶은 사람이 있나요?</h2>
       <ul class="points">
         <li><b>연락이 끊긴 친구·동창</b> · 번호가 바뀌어도 이름과 다닌 학교는 그대로예요</li>
-        <li><b>첫사랑·짝사랑</b> · 💌 맞쪽지는 서로에게 써야만 열려요. 거절당할 걱정 없이</li>
+        <li><b>지나간 인연</b> · 💌 맞쪽지는 서로에게 써야만 열려요</li>
         <li><b>헤어진 가족·고마운 선생님</b> · 둘만 아는 질문으로 진짜 그 사람인지 알아봐요</li>
       </ul>
-      <p class="fine">다시 이어질지는 받는 사람이 정해요. 받는 사람이 답장하거나 그 기기를 기억하기 전에는, 보낸 사람은 쪽지가 열렸는지도 알 수 없어요.</p>
+      <p class="fine">다시 이어질지는 받는 사람이 정해요. 보낸 사람은 상대가 열기 전까지만 쪽지를 거둘 수 있어요.</p>
       <a class="btn primary" href="#/write">쪽지 남기기</a>
     </section>`;
 }
 
-// 왜 지금인가: 멀게 느껴지는 전쟁 대신 이미 겪은 날
+// 가족방: 연락이 끊겼을 때 만날 곳을 미리
 function whyBlock() {
   return `
     <section class="why">
-      <h2>그날, 가족과 만날 곳을 정해 두셨나요?</h2>
-      <p>2022년 10월 15일엔 카카오톡이 멈췄고, 2023년 5월 31일 아침엔 서울에 경계경보 문자가 울렸습니다. 연락이 끊기면 미리 해 둔 약속만 남습니다.
-        전쟁이 나서 전화와 메신저가 끊겨도, 오작교의 쪽지는 남습니다.</p>
+      <h2>서로의 연락이 끊겼을 때,<br>서로 만날 곳을 정해 두셨나요?</h2>
+      <p>연락이 끊기면 미리 해 둔 약속만 남습니다. 전쟁이 나서 전화와 메신저가 끊겨도, 오작교의 쪽지는 남습니다.</p>
       <ul class="points">
         <li>가족 모두가 같은 <b>집결지</b>를 봐요</li>
+        <li><b>집결지가 바뀌어도</b> 확인 가능해요</li>
         <li>각자 <b>"무사해요"</b> 같은 안부를 남겨요</li>
         <li>폰을 잃어도 <b>이름과 생일</b>로 다시 들어와요</li>
       </ul>
@@ -686,6 +719,8 @@ function unlockView(id) {
         );
       } else if (e instanceof ApiError && e.body.error === 'closed') {
         show('받는 사람이 이 쪽지를 지웠어요. 더는 열 수 없어요.');
+      } else if (e instanceof ApiError && e.body.error === 'not_found') {
+        show('보낸 사람이 이 쪽지를 거뒀어요. 더는 열 수 없어요.');
       } else if (e instanceof ApiError && e.body.error === 'hidden') {
         show('아직 숨어 있는 맞쪽지예요. 받는 사람도 보낸 사람에게 쪽지를 쓰면 열 수 있어요.');
       } else if (e instanceof ApiError && e.body.error === 'limit') {
@@ -705,86 +740,75 @@ function unlockView(id) {
 
 function about() {
   render(`
-    <section class="paper prose">
+    <section class="paper prose about">
       <h1>쪽지는 어떻게 지켜지나요?</h1>
-      <p class="lede"><b>오작교 서버에는 읽을 수 있는 개인정보가 없습니다.</b>
-        쪽지는 여러분의 기기 안에서 잠긴 뒤에 서버로 가고, 그 자물쇠를 여는 열쇠는 둘만 아는 질문의 답에서만 나옵니다.
-        답과 열쇠는 어떤 경우에도 서버로 보내지 않습니다.</p>
-      <p class="open-src"><b>코드는 모두 공개되어 있습니다.</b> 아래 설명이 사실인지 <a href="${SOURCE_URL}" target="_blank" rel="noopener">GitHub</a>에서 누구나 직접 확인할 수 있어요.</p>
+      <p class="lede"><b>쪽지는 내 폰에서 잠근 뒤에 보내요.</b> 여는 열쇠는 둘만 아는 답이라, 운영자도 읽을 수 없어요.</p>
+      <ul class="points">
+        <li><b>내 폰에서 잠가요.</b> 서버에는 알아볼 수 없는 암호문만 남아요.</li>
+        <li><b>답은 서버로 보내지 않아요.</b> 답을 맞힌 사람의 폰에서만 쪽지가 열려요.</li>
+        <li><b>이름도 숨겨요.</b> 이름·생일·전화번호는 알아볼 수 없게 바꿔서 보내요.</li>
+        <li><b>전쟁이 나도 남아요.</b> 해외 서버에 보관돼서, 인터넷이 되는 곳이면 어디서든 열려요.</li>
+      </ul>
+      <p class="caution"><b>딱 하나만 지켜 주세요.</b> 답은 받는 사람만 아는 것으로 정하세요. 단톡방이나 SNS에 나온 적 있는 답은 피하세요.</p>
 
-      <h2>세 가지 원칙</h2>
-      <ul>
-        <li><b>기기에서 잠근다.</b> 메시지, 약속 장소, 보낸 사람 이름은 브라우저 안에서 암호화된 뒤에 보내집니다. 서버는 처음부터 끝까지 암호문만 다룹니다(종단간 암호화).</li>
-        <li><b>열쇠는 서버에 없다.</b> 서버는 답도, 답에서 만든 열쇠도 받지 않습니다. 받는 것은 답이 맞는지 가려 줄 뿐 답으로 되돌릴 수 없는 확인값 하나입니다.</li>
-        <li><b>누구의 쪽지인지도 모른다.</b> 이름·생일·전화번호·학교는 기기에서 한 방향으로만 계산한 값으로 서버에 닿습니다. 서버는 두 값이 같은지만 비교할 수 있고, 원래 이름을 되살릴 수 없습니다.</li>
-      </ul>
-
-      <h2>서버에 남는 것과 남지 않는 것</h2>
-      <ul>
-        <li><b>남지 않는 것</b>: 이름, 생일, 전화번호, 학교, 질문, 답, 메시지, 약속 장소, IP 주소의 원래 값.</li>
-        <li><b>남는 것</b>: 기기에서 계산한 되돌릴 수 없는 값, 잠긴 글(암호문), 쪽지를 만든 시각과 마지막 기록 시각.</li>
-      </ul>
-      <p>운영자도 같은 처지입니다. 저장소를 통째로 열어 봐도 보이는 것은 알아볼 수 없는 값과 암호문뿐이라,
-        수사기관 등에서 자료를 요청해도 건넬 수 있는 것은 그것뿐입니다.</p>
-
-      <h2>왜 열쇠 없이는 풀 수 없나요?</h2>
-      <ul>
-        <li><b>내용을 잠근 열쇠는 무작위 256비트입니다.</b> 답에서 만든 것이 아니라 쪽지를 쓸 때 기기가 무작위로 뽑은 열쇠로,
-          은행과 메신저가 쓰는 표준 암호 <b>AES-256-GCM</b>으로 잠급니다. 열쇠 후보가 2<sup>256</sup>개라 지구의 모든 컴퓨터를 동원해 우주의 나이만큼 돌려도 다 넣어 볼 수 없습니다.
-          암호 자체를 깨는 길은 없습니다.</li>
-        <li><b>그 열쇠는 답으로 한 번 더 잠겨 있습니다.</b> 답을 열쇠로 바꾸는 계산(PBKDF2-SHA-256)을 일부러 20만 번 반복하게 해서,
-          답 하나를 넣어 보는 데도 기기가 한참 일하게 했습니다.</li>
-        <li><b>질문도 암호문입니다.</b> 받는 사람의 이름과 생일처럼 보낸 사람이 적은 정보에서 만든 열쇠로 잠겨 있어, 그 정보를 아는 사람의 기기에서만 풀립니다. 서버는 질문도 읽지 못합니다.</li>
-        <li><b>바꿔치기도 불가능합니다.</b> AES-GCM은 잠긴 글이 한 글자라도 바뀌면 열리지 않습니다. 누가 저장소에서 내용을 고쳐도 열 때 바로 드러납니다.</li>
-      </ul>
-
-      <h2>그래서 공격자가 노리는 곳은 답입니다</h2>
-      <p>암호를 깰 수 없으니 남는 길은 답을 하나씩 넣어 보는 것입니다. 오작교는 여기를 네 겹으로 막습니다.</p>
-      <ul>
-        <li><b>횟수 제한.</b> 답이 맞는지는 서버가 가립니다. 같은 인터넷 연결에서 한 쪽지에 하루 5번 넘게 틀리면 사람인지 확인(Cloudflare Turnstile)을 거쳐야 하고,
-          30번을 넘으면 다음 날까지 막힙니다. 여러 연결에서 틀린 답이 한 쪽지에 10번 쌓여도 그 뒤는 모두 사람 확인을 거칩니다.</li>
-        <li><b>작업 증명.</b> 시도할 때마다 기기가 1~2초짜리 계산을 풀어 와야 합니다. 사람에겐 잠깐이지만, 프로그램으로 수십만 번 넣어 보려면 그만큼의 컴퓨터 시간이 듭니다.</li>
-        <li><b>서버 비밀 열쇠.</b> 답 확인값과 잠긴 열쇠는 서버만 아는 비밀 열쇠로 한 번 더 잠가 저장합니다. 이 비밀 열쇠는 저장소와 분리된 Cloudflare 비밀 설정에만 있어,
-          <b>저장소가 통째로 유출돼도 그것만으로는 맞혀 보기를 시작할 수 없습니다.</b></li>
-        <li><b>트래픽 방어.</b> 한 연결에서 10초에 10번을 넘는 요청은 Cloudflare가 차단하고, 자동화된 봇은 걸러 냅니다. 요청이 비정상적으로 몰리면 모든 요청에 사람 확인을 붙입니다.</li>
-      </ul>
-      <p>한계도 솔직히 말씀드립니다. 저장소와 서버 비밀 열쇠를 <b>둘 다</b> 빼낸 공격자라면, 사전에 나올 만한 흔한 답(음식 이름, 흔한 이름, 네 자리 숫자)은 컴퓨터로 맞혀 볼 수 있습니다.
-        마지막 한 겹은 답의 유일함입니다.</p>
-      <p class="caution"><b>이렇게 정하면 안전합니다.</b> 받는 사람만 알고, 가족 단톡방이나 SNS에 올라온 적 없는 답으로 정하세요.
-        질문을 2개 쓰면 두 답을 모두 맞혀야 열려서 훨씬 단단해집니다.</p>
-
-      <h2>누가 무엇을 볼 수 있나요?</h2>
-      <ul>
-        <li>받는 사람의 이름과 생일(학교를 적었다면 이름과 학교)을 아는 사람은 <b>쪽지가 있다는 사실과 질문</b>까지 볼 수 있습니다. 질문에는 이름이나 속마음이 드러나지 않게 써 주세요.</li>
-        <li><b>답을 맞힌 사람만</b> 보낸 사람, 메시지, 약속 장소, 마지막 기록을 볼 수 있습니다.</li>
-        <li>받는 사람이 쪽지를 열어도 <b>답장하거나 그 기기를 기억하기 전에는</b> 보낸 사람에게 아무것도 알려지지 않습니다. 다시 이어질지는 받는 사람이 정합니다.</li>
-        <li>가족방의 집결지는 <b>그룹장만</b> 바꿀 수 있습니다. 답을 알아낸 사람도 가짜 집결지를 올릴 수 없습니다.</li>
-        <li><b>💌 맞쪽지</b>는 상대가 내 이름과 출생연도까지 알고 나에게 쪽지를 쓰기 전까지 검색에 나타나지 않고, 숨어 있는 동안은 답을 알아도 열 수 없습니다.
-          서버는 이름을 모른 채 계산값이 같은지만 봅니다.</li>
-        <li>스팸이나 욕설 쪽지는 답을 맞힌 받는 사람이 지울 수 있습니다. 지운 쪽지는 누구도 다시 찾을 수 없습니다.</li>
-      </ul>
-
-      <h2>개인정보 처리</h2>
-      <ul>
-        <li>이름·생일·전화번호·학교는 원문으로 받지 않습니다. 기기에서 계산한 값만 저장합니다.</li>
-        <li>IP 주소는 저장하지 않습니다. 반복 시도를 세기 위해 날마다 바뀌는 해시값을 최대 하루 동안만 쓰고 지웁니다.</li>
-        <li>접속 통계는 기기마다 하루 한 번 보내는 신호를 날짜별 숫자(접속 수, 국가, 유입 경로, 처음 연 화면)로만 더합니다. 누가 언제 왔는지는 남지 않습니다.</li>
-        <li>데이터는 Cloudflare(해외 사업자)의 서버에 암호문으로 보관됩니다. Cloudflare는 인터넷 중계자로서 요청의 IP 주소와 시각을 봅니다.</li>
-        <li>쪽지·가족방을 만들 때, 그리고 찾기나 답 시도가 비정상적으로 많을 때는 Cloudflare Turnstile로 사람인지 확인합니다. 이때 Cloudflare가 브라우저 정보를 확인하며, 오작교는 그 결과(통과 여부)만 받습니다.</li>
-        <li>14세 미만 자녀는 보호자가 가족방 구성원으로 등록해 주세요.</li>
-        <li>"이 기기 기억하기"를 고르면 열쇠가 이 기기 브라우저에 저장됩니다. 남의 기기에서는 고르지 마세요.</li>
-      </ul>
-      <h2>전쟁이 나도 쪽지가 남나요?</h2>
-      <ul>
-        <li><b>국내 메신저와 따로 보관됩니다.</b> 쪽지는 해외 사업자 Cloudflare의 서버에 암호문으로 보관됩니다. 국내 전화망이나 메신저가 멈춰도 쪽지는 지워지지 않습니다.</li>
-        <li><b>인터넷이 닿는 곳이면 어디서든 열립니다.</b> 다른 나라에서도, 빌린 폰이나 PC에서도 이름과 생일로 찾을 수 있습니다.</li>
-        <li><b>인터넷이 끊긴 곳에서는 열 수 없습니다.</b> 그래서 만날 곳과 시간은 미리 정해 두고, 정말 중요한 약속은 종이에도 적어 두세요.</li>
-      </ul>
-      <h2>누가 운영하나요?</h2>
-      <p>오작교는 개인이 만들어 운영하는 민간 서비스입니다. 회원가입도 광고도 없고, 쪽지 내용은 운영자도 볼 수 없습니다.
-        사이트를 움직이는 코드는 <a href="${SOURCE_URL}" target="_blank" rel="noopener">GitHub</a>에 모두 공개되어 있습니다.</p>
-      <p>문의나 오류 제보는 <a href="${SOURCE_URL}/issues" target="_blank" rel="noopener">GitHub 이슈</a>로 남겨 주세요.
-        보안 허점은 공개 이슈 대신 <a href="${SOURCE_URL}/security/advisories/new" target="_blank" rel="noopener">비공개 보안 제보</a>로 알려 주세요.</p>
+      <h2>더 알고 싶다면</h2>
+      <details>
+        <summary>암호는 얼마나 단단한가요?</summary>
+        <ul>
+          <li><b>내용을 잠근 열쇠는 무작위 256비트입니다.</b> 답에서 만든 것이 아니라 쪽지를 쓸 때 기기가 무작위로 뽑은 열쇠로,
+            은행과 메신저가 쓰는 표준 암호 <b>AES-256-GCM</b>으로 잠급니다. 열쇠 후보가 2<sup>256</sup>개라 암호 자체를 깨는 길은 없습니다.</li>
+          <li><b>그 열쇠는 답으로 한 번 더 잠겨 있습니다.</b> 답을 열쇠로 바꾸는 계산(PBKDF2-SHA-256)을 일부러 20만 번 반복하게 해서,
+            답 하나를 넣어 보는 데도 기기가 한참 일하게 했습니다.</li>
+          <li><b>질문도 암호문입니다.</b> 받는 사람의 이름과 생일처럼 보낸 사람이 적은 정보에서 만든 열쇠로 잠겨 있어, 그 정보를 아는 사람의 기기에서만 풀립니다.</li>
+          <li><b>바꿔치기도 불가능합니다.</b> 잠긴 글이 한 글자라도 바뀌면 열리지 않아서, 누가 저장소에서 내용을 고쳐도 열 때 바로 드러납니다.</li>
+        </ul>
+        <p>암호를 깰 수 없으니 남는 길은 답을 하나씩 넣어 보는 것입니다. 오작교는 여기를 네 겹으로 막습니다.</p>
+        <ul>
+          <li><b>횟수 제한.</b> 같은 인터넷 연결에서 한 쪽지에 하루 5번 넘게 틀리면 사람인지 확인(Cloudflare Turnstile)을 거쳐야 하고,
+            30번을 넘으면 다음 날까지 막힙니다. 여러 연결에서 틀린 답이 한 쪽지에 10번 쌓여도 그 뒤는 모두 사람 확인을 거칩니다.</li>
+          <li><b>작업 증명.</b> 시도할 때마다 기기가 1~2초짜리 계산을 풀어 와야 합니다. 사람에겐 잠깐이지만, 프로그램으로 수십만 번 넣어 보려면 그만큼의 컴퓨터 시간이 듭니다.</li>
+          <li><b>서버 비밀 열쇠.</b> 답 확인값과 잠긴 열쇠는 서버만 아는 비밀 열쇠로 한 번 더 잠가 저장합니다. 이 열쇠는 저장소와 분리된 Cloudflare 비밀 설정에만 있어,
+            저장소가 통째로 유출돼도 그것만으로는 맞혀 보기를 시작할 수 없습니다.</li>
+          <li><b>트래픽 방어.</b> 한 연결에서 10초에 10번을 넘는 요청은 Cloudflare가 차단하고, 요청이 비정상적으로 몰리면 모든 요청에 사람 확인을 붙입니다.</li>
+        </ul>
+        <p>한계도 솔직히 말씀드립니다. 저장소와 서버 비밀 열쇠를 <b>둘 다</b> 빼낸 공격자라면, 흔한 답(음식 이름, 흔한 이름, 네 자리 숫자)은 컴퓨터로 맞혀 볼 수 있습니다.
+          그래서 답은 받는 사람만 아는 것으로 정하고, 질문을 2개 쓰면 훨씬 단단해집니다.</p>
+      </details>
+      <details>
+        <summary>누가 무엇을 볼 수 있나요?</summary>
+        <ul>
+          <li>받는 사람의 이름과 생일(학교를 적었다면 이름과 학교)을 아는 사람은 <b>쪽지가 있다는 사실과 질문</b>까지 볼 수 있습니다. 질문에는 이름이나 속마음이 드러나지 않게 써 주세요.</li>
+          <li><b>답을 맞힌 사람만</b> 보낸 사람, 메시지, 약속 장소, 마지막 기록을 볼 수 있습니다.</li>
+          <li>받는 사람이 쪽지를 열어도 <b>답장하거나 그 기기를 기억하기 전에는</b> 보낸 사람에게 알리지 않습니다. 다시 이어질지는 받는 사람이 정합니다.</li>
+          <li>보낸 사람은 <b>누군가 답을 맞혀 열기 전까지만</b> 쪽지를 거둘 수 있습니다. 거두면 서버에서 흔적 없이 지워집니다.
+            열린 뒤에 거두려 하면 "이미 열려서 거둘 수 없다"는 것만은 보낸 사람이 알게 됩니다.</li>
+          <li>가족방의 집결지는 <b>그룹장만</b> 바꿀 수 있습니다. 답을 알아낸 사람도 가짜 집결지를 올릴 수 없습니다.</li>
+          <li><b>💌 맞쪽지</b>는 상대가 내 이름과 출생연도까지 알고 나에게 쪽지를 쓰기 전까지 검색에 나타나지 않고, 숨어 있는 동안은 답을 알아도 열 수 없습니다.</li>
+          <li>스팸이나 욕설 쪽지는 답을 맞힌 받는 사람이 지울 수 있습니다. 지운 쪽지는 누구도 다시 찾을 수 없습니다.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>서버에 남는 것 · 개인정보 처리</summary>
+        <ul>
+          <li><b>남지 않는 것</b>: 이름, 생일, 전화번호, 학교, 질문, 답, 메시지, 약속 장소, IP 주소의 원래 값.</li>
+          <li><b>남는 것</b>: 기기에서 계산한 되돌릴 수 없는 값, 잠긴 글(암호문), 쪽지를 만든 시각과 마지막 기록 시각, 쪽지가 열린 적이 있는지(시각 없이 한 칸).</li>
+          <li>운영자가 저장소를 통째로 열어 봐도 보이는 것은 알아볼 수 없는 값과 암호문뿐이라, 수사기관 등에서 자료를 요청해도 건넬 수 있는 것은 그것뿐입니다.</li>
+          <li>IP 주소는 저장하지 않습니다. 반복 시도를 세기 위해 날마다 바뀌는 해시값을 최대 하루 동안만 쓰고 지웁니다.</li>
+          <li>접속 통계는 기기마다 하루 한 번 보내는 신호를 날짜별 숫자(접속 수, 국가, 유입 경로, 처음 연 화면)로만 더합니다. 누가 언제 왔는지는 남지 않습니다.</li>
+          <li>데이터는 Cloudflare(해외 사업자)의 서버에 암호문으로 보관됩니다. Cloudflare는 인터넷 중계자로서 요청의 IP 주소와 시각을 봅니다.</li>
+          <li>쪽지·가족방을 만들 때, 그리고 찾기나 답 시도가 비정상적으로 많을 때는 Cloudflare Turnstile로 사람인지 확인합니다. 오작교는 그 결과(통과 여부)만 받습니다.</li>
+          <li>14세 미만 자녀는 보호자가 가족방 구성원으로 등록해 주세요.</li>
+          <li>"이 기기 기억하기"를 고르면 열쇠가 이 기기 브라우저에 저장됩니다. 남의 기기에서는 고르지 마세요.</li>
+          <li>인터넷이 끊긴 곳에서는 쪽지를 열 수 없습니다. 만날 곳과 시간은 미리 정해 두고, 정말 중요한 약속은 종이에도 적어 두세요.</li>
+        </ul>
+      </details>
+      <details>
+        <summary>누가 운영하나요?</summary>
+        <p>오작교는 개인이 만들어 운영하는 민간 서비스입니다. 회원가입도 광고도 없습니다.
+          위 설명이 사실인지 누구나 확인할 수 있게, 사이트를 움직이는 코드를 <a href="${SOURCE_URL}" target="_blank" rel="noopener">GitHub</a>에 모두 공개해 두었습니다.</p>
+        <p>문의나 오류 제보는 <a href="${SOURCE_URL}/issues" target="_blank" rel="noopener">GitHub 이슈</a>로 남겨 주세요.
+          보안 허점은 공개 이슈 대신 <a href="${SOURCE_URL}/security/advisories/new" target="_blank" rel="noopener">비공개 보안 제보</a>로 알려 주세요.</p>
+      </details>
       <p class="fine">오작교는 민간 서비스이며 정부·공공기관의 공식 대피 체계를 대신하지 않습니다. 실제 대피는 재난 문자와 공식 안내를 따르세요.</p>
     </section>
   `);
@@ -868,7 +892,7 @@ function hello() {
 }
 
 window.addEventListener('hashchange', () => {
-  $('#share-pop')?.remove(); // 주소 복사 팝업은 그 화면에서만
+  closePop(); // 주소 복사·후원 팝업은 그 화면에서만
   route();
 });
 window.addEventListener('error', () => busy());

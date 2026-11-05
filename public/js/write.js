@@ -316,6 +316,7 @@ export async function writeNote() {
           </div>
         </fieldset>
         <p class="error" id="err" hidden></p>
+        <p class="hint">마음이 바뀌면, 누군가 답을 맞혀 열기 전까지 이 기기에서 쪽지를 거둘 수 있어요.</p>
         <button class="btn primary big" type="submit">쪽지 남기기</button>
       </form>
     </section>
@@ -466,6 +467,7 @@ function noteDone(target, { toName, fromName, fromBd }, mutual) {
         ${mutual ? '' : '<li>미리 알리고 싶다면 "상대에게 알리기"로 보내세요. 쪽지 내용과 답은 들어가지 않아요.</li>'}
         <li>몰래 남긴 쪽지라면 그대로 두세요. 상대가 언젠가 직접 찾아올 수 있어요.</li>
         <li>이 기기는 보낸 사람으로 기억돼서, 나중에 장소가 바뀌면 이어서 남길 수 있어요.</li>
+        <li>마음이 바뀌면 "내 쪽지 보기"에서 거둘 수 있어요. 누군가 답을 맞혀 열기 전까지만요.</li>
       </ul>
       <div class="row2">
         ${mutual ? '' : '<button class="btn" id="share">상대에게 알리기</button>'}

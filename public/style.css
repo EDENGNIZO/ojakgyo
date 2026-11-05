@@ -369,9 +369,16 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 .more[open] > summary { margin-bottom: 4px; }
 /* 만든 직후 보낼 글 미리보기 */
 .share-preview { margin: 0 0 12px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--paper); border-radius: 0 10px 10px 0; font-size: .9375rem; }
-/* 안내문 맨 위: 코드 공개 */
-.open-src { padding: 12px 14px; border: 1.5px dashed var(--accent); border-radius: 10px; }
-.open-src a { color: var(--accent); }
+/* 안내 페이지: 누구나 읽을 네 줄, 자세한 설명은 접어 둔다 */
+.prose .points { margin: 6px 0 20px; gap: 12px; }
+.prose .points li { padding-left: 26px; }
+.prose .points li::before { left: 4px; top: .55em; width: 10px; height: 10px; background: none; border: 2px solid var(--accent); }
+.about h2 { margin: 28px 0 4px; font-size: 1.0625rem; }
+.about details { border-top: 1px solid var(--line); }
+.about details:last-of-type { border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+.about details ul { margin: 4px 0 14px; }
+.about details[open] { padding-bottom: 6px; }
+.about a { color: var(--accent); }
 /* 좋은/안 좋은 질문 예: 파란 글자를 누르면 칸이 커지며 보인다 */
 .eg > summary { min-height: 44px; color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .eg ul { list-style: none; margin: 0 0 8px; padding: 12px 14px; display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
@@ -461,7 +468,7 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 /* 자판이 떠 있는 동안 아래 내용과 알림이 가리지 않게 */
 html.kbd-show body { padding-bottom: var(--kbd-h, 260px); }
 html.kbd-show #toast { bottom: calc(var(--kbd-h, 260px) + 12px); }
-.pop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: var(--gutter); background: rgba(24, 20, 14, .5); }
+.pop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: var(--gutter); overflow-y: auto; background: rgba(24, 20, 14, .5); }
 .pop-box {
   width: 100%; max-width: 360px; padding: 26px 20px 20px; border-radius: 12px;
   background: var(--card); color: var(--ink); box-shadow: var(--shadow); text-align: center;
@@ -475,6 +482,20 @@ html.kbd-show #toast { bottom: calc(var(--kbd-h, 260px) + 12px); }
 .brand em { display: inline-block; max-width: 0; overflow: hidden; opacity: 0; font-style: normal; animation: brand-com .5s ease-out 1.5s both; }
 .pop-msg { font-weight: 700; margin: 0 0 14px; animation: fade .4s ease-out 1.9s both; }
 .pop-url { font-weight: 700; margin: 0 0 14px; user-select: all; -webkit-user-select: all; }
+/* 후원 팝업: 엽서 한 장, 가운데 우표(QR). 어두운 화면에서도 우표는 종이색 바탕이어야 카메라가 읽는다 */
+.postcard { margin: 0 0 16px; }
+.postcard .kicker { margin: 0 0 6px; letter-spacing: .06em; }
+.postcard h2 { font-size: 1.1875rem; line-height: 1.45; margin: 0 0 .5em; }
+.postcard p { margin: 0 0 12px; }
+.postcard .fine { margin: 0; }
+.pc-stamp {
+  display: inline-grid; justify-items: center; gap: 4px; margin: 2px 0 12px; padding: 8px 8px 6px;
+  background: #fffcf5; color: #625b4f; border: 1px dashed #8e8473; border-radius: 2px;
+  font: 600 .75rem/1 var(--sans); letter-spacing: .04em; text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .15); transform: rotate(2.5deg);
+}
+.pc-stamp img { display: block; width: 112px; height: 112px; }
+.pop-box .btn.wide { margin: 0 0 4px; }
 @keyframes brand-tight { to { letter-spacing: -.01em; } }
 @keyframes brand-gap { to { width: 0; } }
 @keyframes brand-com { to { max-width: 3em; opacity: 1; } }
@@ -533,11 +554,9 @@ table.stat th { color: var(--muted); font-weight: 600; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after { animation: none !important; }
-  /* 움직임 없이 바로 끝 모양(findmeinkorea.com)으로 */
-  .brand { letter-spacing: -.01em; }
-  .brand i { width: 0; }
-  .brand em { max-width: none; opacity: 1; }
+  /* 폰의 "동작 줄이기"를 켜도 주소 팝업의 글자 붙이기만은 남긴다.
+     화면이 움직이지 않는 작은 글자 변화이고, find me in korea가 주소가 되는 걸 보여 주는 게 이 팝업의 쓸모라서 */
+  *:not(.brand, .brand *, .pop-msg), ::before, ::after { animation: none !important; }
 }
 @media (max-width: 359px) {
   .hero h1 { font-size: 1.625rem; }

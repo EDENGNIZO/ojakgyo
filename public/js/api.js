@@ -56,6 +56,7 @@ export const api = {
   recover: (id, body) => call(`/api/box/${id}/recover`, body),
   release: (id, body) => call(`/api/box/${id}/release`, body),
   close: (id, body) => call(`/api/box/${id}/close`, body),
+  withdraw: (id, body) => call(`/api/box/${id}/withdraw`, body),
   geocode: (q) => call('/api/geocode', { q }),
   doors: (id, body) => call(`/api/box/${id}/doors`, body),
 };

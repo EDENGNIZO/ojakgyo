@@ -451,8 +451,14 @@ async function unlock(request, env, busy) {
   if (!pow.startsWith(LIMITS.powPrefix)) return fail(400, 'bad_pow');
 
   if (await verifierMatches(env.PEPPER, b.proof, box.verifier, safeEqual)) {
-    if (box.fail_count) {
-      await env.DB.prepare('UPDATE boxes SET fail_count = 0 WHERE id = ?').bind(box.id).run();
+    // 쪽지가 처음 열리면 "열렸음"을 한 번만 남긴다(시각 없이). 이때부터 보낸 사람은 쪽지를 거둘 수 없다.
+    // 고치는 줄이 없으면 그 사이 보낸 사람이 거둔 것이라 열어 주지 않는다
+    const markOpen = box.type === 'note' && !box.opened;
+    if (box.fail_count || markOpen) {
+      const r = await env.DB.prepare('UPDATE boxes SET fail_count = 0, opened = MAX(opened, ?) WHERE id = ?')
+        .bind(markOpen ? 1 : 0, box.id)
+        .run();
+      if (!r.meta.changes) return fail(404, 'not_found');
     }
     // 아직 예전 값으로 남은 쪽지는 열리는 김에 잠가 둔다
     if (!box.verifier.startsWith(P1) || !box.wrapped.startsWith(P1)) {
@@ -478,7 +484,8 @@ async function unlock(request, env, busy) {
 async function readBox(id, request, env) {
   const b = await readBody(request);
   const box = await checkAccess(env.DB, id, b?.access);
-  if (!box) return fail(403, 'denied');
+  // 보낸 사람이 거둔 쪽지는 없어졌다고 알린다(열쇠가 틀린 것과 구별해서)
+  if (!box) return (await loadBox(env.DB, id)) ? fail(403, 'denied') : fail(404, 'gone');
   const ip = await ipKey(request);
   if (await overIpLimit(env.DB, ip, (k) => `rd:${k}:${Math.floor(Date.now() / HOUR)}`, HOUR, LIMITS.readPerIpPerHour)) {
     return fail(429, 'too_many');
@@ -517,6 +524,8 @@ async function readBox(id, request, env) {
     type: box.type,
     hidden: !!box.hidden,
     closed: box.closed_at || null,
+    // 거두기 버튼을 보일지: 보낸 사람 기기이고, 이 기능 뒤에 만든 쪽지일 때. 열렸는지(0·1)는 여기서 알리지 않는다
+    withdraw: tok?.role === 'owner' && box.type === 'note' && !box.closed_at && box.opened !== 2,
     recovery: recoveryRows,
     role: tok ? tok.role : null,
     slot: tok?.slot ?? null,
@@ -891,6 +900,30 @@ async function closeNote(id, request, env) {
   return json({ ok: true });
 }
 
+// 보낸 사람이 쪽지를 거둔다. 누군가 답을 맞혀 열기 전(opened = 0)에만, 보낸 사람 기기(owner 토큰)로만.
+// 아무도 읽지 않은 쪽지라 흔적 없이 모두 지운다(출입문·글·기기·복구 질문·접속 기록·쪽지 자체).
+// 모든 줄을 "아직 안 열렸으면"으로 묶어 한 번에 처리하므로, 같은 순간에 누가 열면 아무것도 지워지지 않는다.
+// 열린 뒤라면 opened를 알려 준다. 보낸 사람이 이걸로 "열렸다"를 알 수 있지만, 안 열렸다면 쪽지가 사라지므로 쉽게 떠볼 수는 없다.
+async function withdrawNote(id, request, env) {
+  const b = await readBody(request);
+  const box = await checkAccess(env.DB, id, b?.access);
+  if (!box) return fail(403, 'denied');
+  if (box.type !== 'note') return fail(400, 'bad_request');
+  const tok = await tokenInfo(env.DB, id, b.token);
+  if (tok?.role !== 'owner') return fail(403, 'denied');
+  if (box.opened === 2) return fail(409, 'old');
+  if (box.opened || box.closed_at) return fail(409, 'opened');
+  const unopened = 'EXISTS (SELECT 1 FROM boxes WHERE id = ?1 AND opened = 0)';
+  const res = await env.DB.batch([
+    ...['doors', 'entries', 'tokens', 'seen', 'visits', 'recovery'].map((t) =>
+      env.DB.prepare(`DELETE FROM ${t} WHERE box_id = ?1 AND ${unopened}`).bind(id)
+    ),
+    env.DB.prepare('DELETE FROM boxes WHERE id = ?1 AND opened = 0').bind(id),
+  ]);
+  if (!res.at(-1).meta.changes) return fail(409, 'opened');
+  return json({ ok: true });
+}
+
 // 그룹장이 구성원을 추가할 때 새 출입문을 단다. 쪽지는 문을 더 달 일이 없다(스팸 쪽지를 여러 사람에게 꽂는 길이 되지 않게).
 async function addDoors(id, request, env) {
   const b = await readBody(request, LIMITS.maxBodyCreate);
@@ -940,7 +973,7 @@ export default {
       if (Math.random() < 0.01) ctx.waitUntil(cleanup(env));
       if (request.method === 'GET' && path === '/api/stats') return await stats(request, env, ctx);
       if (request.method !== 'POST') return fail(405, 'method');
-      const m = path.match(/^\/api\/box\/([A-Za-z0-9_-]{8,40})\/(read|post|device|invite|claim|recovery|recover|release|doors|close)$/);
+      const m = path.match(/^\/api\/box\/([A-Za-z0-9_-]{8,40})\/(read|post|device|invite|claim|recovery|recover|release|doors|close|withdraw)$/);
       if (!m && !TOP.has(path)) return fail(404, 'not_found'); // 모르는 경로는 DB를 건드리지 않는다
 
       // 전역 서킷 브레이커: 요청이 몰리면 사람 확인을 거친 요청만 받는다. geocode는 자기 한도로 충분하다.
@@ -974,6 +1007,7 @@ export default {
       if (action === 'doors') return await addDoors(id, request, env);
       if (action === 'release') return await releaseSlot(id, request, env);
       if (action === 'close') return await closeNote(id, request, env);
+      if (action === 'withdraw') return await withdrawNote(id, request, env);
       return fail(404, 'not_found');
     } catch (e) {
       console.error(e);

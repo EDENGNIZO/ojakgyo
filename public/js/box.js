@@ -36,6 +36,11 @@ async function load(id) {
   } catch (e) {
     // 열쇠가 틀린 것(403)만 "열 수 없어요". 서버가 잠깐 오류를 내거나(5xx) 요청이 몰려 막혔으면(429) 저장본을 보여 준다
     if (e instanceof ApiError && e.status === 403) return { denied: true };
+    // 보낸 사람이 거둔 쪽지: 서버에 더는 없으니 이 기기에 남은 것도 지운다
+    if (e instanceof ApiError && e.body.error === 'gone') {
+      device.remove(id);
+      return { gone: true };
+    }
     if (!saved?.cache) return { unreachable: true, busy: e instanceof ApiError && e.body.error === 'busy' };
     data = saved.cache;
     offline = true;
@@ -60,14 +65,16 @@ export async function showBox(id) {
   } finally {
     busy();
   }
-  if (ctx.missing || ctx.denied || ctx.unreachable || !ctx.header) {
+  if (ctx.missing || ctx.denied || ctx.unreachable || ctx.gone || !ctx.header) {
     return render(`
       <section class="paper empty">
-        <h1>${ctx.busy ? '지금 요청이 몰려요' : ctx.unreachable ? '연결할 수 없어요' : '열 수 없어요'}</h1>
+        <h1>${ctx.busy ? '지금 요청이 몰려요' : ctx.unreachable ? '연결할 수 없어요' : ctx.gone ? '거둔 쪽지예요' : '열 수 없어요'}</h1>
         <p>${
           ctx.busy
             ? '잠시 뒤 다시 시도해 주세요.'
-            : ctx.unreachable
+            : ctx.gone
+              ? '보낸 사람이 아무도 열기 전에 이 쪽지를 거뒀어요. 이제 서버에도 남아 있지 않아요.'
+              : ctx.unreachable
               ? '인터넷이 되는 곳에서 다시 시도해 주세요.'
               : '이 기기에 열쇠가 없거나 바뀌었어요. 내 이름과 생일로 다시 찾아 주세요.'
         }</p>
@@ -595,6 +602,15 @@ function noteView(ctx) {
           </section>`
     }
     ${
+      isSender && ctx.data.withdraw && !ctx.offline
+        ? `<section class="paper" id="withdrawBox">
+            <h2>쪽지를 거두고 싶나요?</h2>
+            <p class="fine">누군가 답을 맞혀 이 쪽지를 열기 전까지만 거둘 수 있어요. 거두면 서버에서 흔적 없이 지워지고, 되돌릴 수 없어요.</p>
+            <button class="btn" id="withdrawNote">쪽지 거두기</button>
+          </section>`
+        : ''
+    }
+    ${
       ctx.offline || closed || isSender
         ? ''
         : `<section class="paper">
@@ -609,6 +625,7 @@ function noteView(ctx) {
   wireIdentity(ctx);
   wireCompose(ctx);
   wireClose(ctx);
+  wireWithdraw(ctx);
   $('#share')?.addEventListener('click', () => share(noteShareText()));
   wireRelease(ctx);
   recoveryTools(ctx, isOwner);
@@ -628,6 +645,34 @@ function wireClose(ctx) {
       location.hash = '#/';
     } catch {
       toast('지우지 못했어요. 인터넷이 되는 곳에서 다시 시도해 주세요.');
+    } finally {
+      busy();
+    }
+  });
+}
+
+// 보낸 사람이 쪽지를 거둔다. 이미 누가 열었다면 서버가 거절하고(409 opened) 그 사실만 알려 준다
+function wireWithdraw(ctx) {
+  $('#withdrawNote')?.addEventListener('click', async () => {
+    if (!confirm('이 쪽지를 거둘까요?\n아직 아무도 열지 않았다면 서버에서 흔적 없이 지워지고, 되돌릴 수 없어요.')) return;
+    busy('거두는 중…');
+    try {
+      await api.withdraw(ctx.id, { access: ctx.keys.access, token: ctx.saved?.token });
+      device.remove(ctx.id);
+      try {
+        sessionStorage.removeItem('findme.results');
+      } catch {}
+      toast('쪽지를 거뒀어요. 이제 누구도 찾을 수 없어요.');
+      location.hash = '#/';
+    } catch (e) {
+      const code = e instanceof ApiError && e.body.error;
+      if (code === 'opened' || code === 'old') {
+        $('#withdrawBox').innerHTML = `<h2>거둘 수 없어요</h2><p class="fine">${
+          code === 'old' ? '거두기가 생기기 전에 남긴 쪽지라 거둘 수 없어요.' : '누군가 이미 답을 맞혀 이 쪽지를 열었어요. 연 뒤에는 거둘 수 없어요.'
+        }</p>`;
+      } else {
+        toast('거두지 못했어요. 인터넷이 되는 곳에서 다시 시도해 주세요.');
+      }
     } finally {
       busy();
     }
