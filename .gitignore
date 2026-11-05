@@ -1,0 +1,13 @@
+node_modules/
+.wrangler/
+.dev.vars
+.DS_Store
+
+# 디자인 넘기기: 다시 만들 수 있는 산출물
+design-handoff/screens/
+design-handoff/snapshots/
+design-handoff/current/
+design-handoff.zip
+
+# 배포용 압축본 (npm run build)
+dist/

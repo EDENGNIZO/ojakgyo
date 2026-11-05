@@ -1,0 +1,22 @@
+name = "findme"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+
+# 정식 주소만 연다. workers.dev 주소는 도메인에 건 Cloudflare 방어(속도 제한·봇 차단)를 우회하는 문이 되므로 닫는다.
+# 워커도 정식 주소 밖에서는 API를 열지 않는다(src/worker.js HOSTS). 테스트는 npm run dev(로컬)로.
+workers_dev = false
+# 미리보기 주소(*-findme.edengnizo.workers.dev)도 같은 이유로 닫는다. 대시보드에서도 꺼 두었고, 배포가 다시 켜지 않도록 여기에도 적는다.
+preview_urls = false
+routes = [{ pattern = "findmeinkorea.com", custom_domain = true }]
+
+# 정적 파일은 Cloudflare가 직접 서빙하고, 일치하는 파일이 없는 /api/* 요청만 워커로 들어온다.
+# 배포는 압축본(dist/, npm run build가 public/에서 만든다). 로컬 개발(npm run dev)은 원본 public/을 그대로 쓴다.
+[assets]
+directory = "./dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "findme"
+# Cloudflare D1 (APAC)
+database_id = "ec988eec-a815-418e-9ad0-e509ac0446ed"
+migrations_dir = "migrations"

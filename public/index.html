@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>오작교 — 전쟁이 나도 쪽지는 남는다 | 가족·소중한 사람을 다시 잇는 쪽지</title>
+  <meta name="description" content="오작교: 전쟁이 나면 전화와 국내 메신저는 끊깁니다. 하지만 쪽지는 남습니다. 소중한 사람에게 쪽지와 약속 장소를 남겨 두면, 상대는 언제 어디서든 자기 이름과 생일로 찾아와 확인할 수 있습니다.">
+  <link rel="canonical" href="https://findmeinkorea.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="오작교">
+  <meta property="og:title" content="오작교 — 전쟁이 나도 쪽지는 남는다">
+  <meta property="og:description" content="소중한 사람에게 쪽지와 약속 장소를 남겨 두세요. 메신저가 끊겨도, 폰을 잃어버려도 오작교의 쪽지는 서로를 연결합니다.">
+  <meta property="og:url" content="https://findmeinkorea.com/">
+  <meta property="og:locale" content="ko_KR">
+  <!-- 검색 결과에 사이트 이름을 "오작교"로 보여 달라는 표시 -->
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"오작교","alternateName":["오작교 쪽지","findme","findmeinkorea"],"url":"https://findmeinkorea.com/","inLanguage":"ko"}</script>
+  <meta name="theme-color" content="#f3eee4" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#181715" media="(prefers-color-scheme: dark)">
+  <meta name="referrer" content="no-referrer">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/js/app.js"></script>
+  <!-- 첫 화면에 필요한 모듈만 한 번에 받아 느린 인터넷에서 왕복 횟수를 줄인다. 나머지는 그 화면을 열 때 -->
+  <link rel="modulepreload" href="/js/crypto.js">
+  <link rel="modulepreload" href="/js/api.js">
+  <link rel="modulepreload" href="/js/ui.js">
+</head>
+<body>
+  <header class="mast">
+    <a href="#/" class="logo">오작교</a>
+    <a href="#/about" class="mast-link">쪽지는 어떻게 지켜지나요?</a>
+    <button type="button" class="theme" id="theme" aria-label="화면 밝기 바꾸기"></button>
+  </header>
+  <main id="app">
+    <!-- 화면 코드가 오기 전에 보이는 첫 문장(느린 인터넷·검색엔진용). app.js의 첫 화면이 곧 덮어쓴다 -->
+    <section class="hero">
+      <h1>전쟁이 나면 전화와 국내 메신저는 끊깁니다.<br>하지만 쪽지는 남습니다.</h1>
+      <p class="lede">소중한 사람에게 쪽지와 약속 장소를 남겨 두세요. 상대는 언제 어디서든 인터넷만 된다면 자기 이름과 생일로 찾아와 확인할 수 있습니다.</p>
+    </section>
+    <noscript><p class="paper">이 사이트는 자바스크립트가 필요해요. 브라우저 설정에서 켜 주세요.</p></noscript>
+  </main>
+  <footer class="foot">
+    민간 서비스 · 공식 대피 안내를 대신하지 않습니다 · <a href="#/about">보안·개인정보</a><span id="support-link"> · <a href="#/support">후원</a></span>
+  </footer>
+  <div id="busy" hidden><div class="busy-box"><span class="spinner"></span><span id="busy-text"></span><div id="human" hidden></div></div></div>
+  <div id="toast" hidden role="status" aria-live="polite"></div>
+</body>
+</html>

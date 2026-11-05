@@ -1,0 +1,10 @@
+{
+  "name": "오작교 — 쪽지는 남는다",
+  "short_name": "오작교",
+  "lang": "ko",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3eee4",
+  "theme_color": "#f3eee4",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
