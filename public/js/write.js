@@ -508,9 +508,9 @@ export async function createRoom() {
       <form id="f" novalidate>
         <fieldset>
           <legend><span class="num">1</span> 가족방 이름</legend>
-          ${kbdLink()}
           <label>이름 <input name="title" maxlength="30" required placeholder="예: 망원동 김씨네">
             <span class="hint">찾을 때 보이는 이름이에요. 주소나 실명 대신 가족끼리 알아볼 수 있는 이름으로 정해 주세요.</span></label>
+          ${kbdLink()}
         </fieldset>
         <fieldset>
           <legend><span class="num">2</span> 구성원</legend>
@@ -518,7 +518,7 @@ export async function createRoom() {
             <strong>나 (그룹장)</strong>
             <label>내 이름 <input name="meName" maxlength="40" required placeholder="예: 김철수"></label>
             <label>내 생일 <input name="meBd" inputmode="numeric" required placeholder="예: 19680502"></label>
-            <label>내 전화번호 <span class="opt">선택</span> <input name="mePhone" inputmode="tel" placeholder="예: 010-1234-5678"></label>
+            <label><span class="field-name">내 전화번호 <span class="opt">선택</span></span> <input name="mePhone" inputmode="tel" placeholder="예: 010-1234-5678"></label>
           </div>
           <div id="members"></div>
           <button type="button" class="btn" id="add">+ 구성원 추가</button>
@@ -526,7 +526,7 @@ export async function createRoom() {
         <fieldset>
           <legend><span class="num">3</span> 집결지</legend>
           ${placeBlock('p', { label: '집결지', memoPlaceholder: '예: 할머니 댁 앞 놀이터 (○○동 ○○아파트 정문)' })}
-          <label>한마디 <span class="opt">선택</span>
+          <label><span class="field-name">한마디 <span class="opt">선택</span></span>
             <input name="text" maxlength="300" placeholder="예: 연락이 끊기면 매일 오후 3시에 여기서 만나자"></label>
         </fieldset>
         <fieldset>

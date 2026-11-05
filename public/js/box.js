@@ -710,7 +710,7 @@ function adminTools(ctx) {
         <summary>집결지 바꾸기</summary>
         <form id="of" novalidate>
           ${placeBlock('o', { label: '새 집결지' })}
-          <label>한마디 <span class="opt">선택</span> <input name="text" maxlength="300" placeholder="예: 1차 장소가 위험해서 바꿨어. 여기로 와."></label>
+          <label><span class="field-name">한마디 <span class="opt">선택</span></span> <input name="text" maxlength="300" placeholder="예: 1차 장소가 위험해서 바꿨어. 여기로 와."></label>
           <button class="btn primary" type="submit">새 집결지 알리기</button>
         </form>
       </details>

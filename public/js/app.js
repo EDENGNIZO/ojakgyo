@@ -146,7 +146,7 @@ async function home() {
       <h1>연락이 끊긴 그 사람도<br>나를 찾고 있을까요?</h1>
       <p class="kicker">1950년, 피난민들은 다리 난간과 벽에 쪽지를 붙였습니다.</p>
       <p class="lede">연락이 끊긴 친구, 첫사랑, 헤어진 가족에게 쪽지를 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다. 전쟁이 나도 쪽지는 남습니다.</p>
-      <p class="trust">회원가입 없음 · 광고 없음 · 운영자도 못 읽음 · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
+      <p class="trust"><span>회원가입 없음</span> · <span>광고 없음</span> · <span>운영자도 못 읽음</span> · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
     </section>
     <nav class="actions">
       <a class="btn primary big" href="#/find">나에게 남겨진 쪽지 확인</a>

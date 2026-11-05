@@ -93,7 +93,7 @@ export function idFields(prefix, { required = false, who = '', school = false } 
         </select>
       </label>
       <input name="${prefix}bd" inputmode="numeric" autocomplete="off" placeholder="예: 19950314">
-      <label>${of}전화번호 <span class="opt">선택</span>
+      <label><span class="field-name">${of}전화번호 <span class="opt">선택</span></span>
         <input name="${prefix}phone" inputmode="tel" autocomplete="off" placeholder="예: 010-1234-5678">
       </label>
       ${school ? schoolField(prefix, of) : ''}

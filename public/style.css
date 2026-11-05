@@ -36,6 +36,9 @@
   --shadow: 0 1px 1px rgba(0, 0, 0, .3), 0 12px 26px -14px rgba(0, 0, 0, .7); color-scheme: dark;
 }
 
+/* 폭: 화면 끝과 글 사이 여백(폰 폭에 따라 20~28px), 종이 안쪽 여백 */
+:root { --gutter: clamp(20px, 6.4vw, 28px); --pad: clamp(18px, 5.4vw, 26px); }
+
 /* 바탕: 결이 있는 미색 종이 */
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -50,12 +53,15 @@ body {
 a { color: inherit; text-underline-offset: 3px; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 h1, h2 { font-family: var(--serif); font-weight: 700; line-height: 1.4; margin: 0 0 .5em; letter-spacing: -.01em; }
-h1 { font-size: 1.625rem; }
+h1 { font-size: clamp(1.5rem, 6.6vw, 1.75rem); }
 h2 { font-size: 1.125rem; }
 p { margin: 0 0 .8em; }
 
-.mast, #app, .foot { max-width: 600px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
-.mast { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; }
+.mast, #app, .foot {
+  max-width: 600px; margin: 0 auto;
+  padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right));
+}
+.mast { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 10px; }
 /* 이름표: 제목(h1·h2)과 같은 명조·같은 잉크색 한 가지로 */
 .logo { display: inline-flex; flex: none; align-items: center; min-height: 48px; color: var(--ink); font: 700 1.25rem/1 var(--serif); letter-spacing: .02em; text-decoration: none; white-space: nowrap; }
 /* 봉투 그림 (로고·첫 버튼): 테두리 + V자 날개 + 인주 점 */
@@ -91,20 +97,22 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 /* 종이 한 장 */
 .paper {
   background: var(--card); border: 1px solid var(--line); border-radius: 4px;
-  padding: 22px 20px; margin: 16px 0; box-shadow: var(--shadow);
+  padding: 24px var(--pad) 22px; margin: 18px 0; box-shadow: var(--shadow);
 }
 
 /* 첫 화면 */
-.hero { padding: 26px 0 0; }
+.hero { padding: 30px 0 0; }
 /* 다리 난간에 붙였던 쪽지 한 장 */
 .hero .kicker {
-  position: relative; display: inline-block; margin: 4px 0 20px; padding: 12px 14px 10px;
+  position: relative; display: inline-block; margin: 6px 0 24px; padding: 12px 16px 10px;
   background: var(--card); color: var(--ink); font-family: var(--serif); box-shadow: var(--shadow); transform: rotate(-1.2deg);
 }
 .hero .kicker::before { content: ""; position: absolute; top: -9px; left: 50%; width: 64px; height: 18px; margin-left: -32px; background: var(--tape); transform: rotate(3deg); }
-.hero h1 { font-size: 1.875rem; line-height: 1.38; margin-bottom: .6em; }
+.hero h1 { font-size: clamp(1.625rem, 7.6vw, 2rem); line-height: 1.38; margin-bottom: .6em; }
 .trust { color: var(--muted); font-size: .9375rem; margin: 0; }
 .trust a { color: var(--accent); }
+/* 줄은 · 에서만 바뀐다 ("코드 / 공개"로 갈리지 않게) */
+.trust span, .trust a { white-space: nowrap; }
 .counter { margin: -14px 0 26px; color: var(--muted); font-size: .9375rem; text-align: center; }
 /* 소인(消印) 물결 */
 .counter::before {
@@ -112,11 +120,11 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
   background: repeating-linear-gradient(var(--accent) 0 1.5px, transparent 0 4.75px); opacity: .5;
 }
 .counter b { color: var(--accent); font-size: 1.125rem; }
-.actions { display: grid; gap: 10px; margin: 24px 0 30px; }
+.actions { display: grid; gap: 12px; margin: 28px 0 32px; }
 .actions .row2 { margin: 0; }
 .actions .big::before { border-color: var(--on-ink); color: var(--on-ink); }
 /* 이렇게 열려요: 세 단계 + 체험용 쪽지 */
-.demo, .why { padding-top: 22px; margin-bottom: 26px; border-top: 1px solid var(--line); }
+.demo, .why { padding-top: 30px; margin-bottom: 32px; border-top: 1px solid var(--line); }
 .demo h2, .why h2 { font-size: 1.25rem; margin-top: 4px; }
 .steps { list-style: none; margin: 4px 0 18px; padding: 0; counter-reset: s; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; font-size: .9375rem; font-weight: 600; line-height: 1.4; }
 .steps li { counter-increment: s; display: grid; justify-items: center; align-content: start; gap: 6px; }
@@ -158,7 +166,7 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 .btn.big { width: 100%; min-height: 64px; font-size: 1.1875rem; }
 .btn.small { min-height: 48px; padding: 8px 14px; font-size: .9375rem; border-radius: 10px; }
 .btn.ghost { border-color: transparent; background: none; text-decoration: underline; text-underline-offset: 4px; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 0; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0 0; }
 /* 두 칸 버튼은 좌우 여백을 줄여 "상대에게 알리기" 같은 글이 360px 폰에서도 한 줄로 */
 .row2 > .btn { padding-left: 12px; padding-right: 12px; }
 .row2.tight { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; }
@@ -169,7 +177,7 @@ form { display: grid; gap: 16px; }
 fieldset { border: 0; border-top: 1px dashed var(--line); margin: 6px 0 0; padding: 16px 0 0; display: grid; gap: 16px; }
 legend { font: 700 1.125rem var(--serif); padding: 0 8px 0 0; }
 /* 쪽지 쓰기: 받는 사람 칸과 내 칸이 헷갈리지 않게 내 칸은 상자로 묶는다 */
-fieldset.me { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 12px 14px 16px; margin-top: 18px; }
+fieldset.me { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 12px clamp(12px, 3.8vw, 18px) 18px; margin-top: 18px; }
 fieldset.me legend { padding: 0 6px; }
 .num {
   display: inline-grid; place-items: center; width: 28px; height: 28px; margin-right: 8px;
@@ -200,7 +208,9 @@ details > summary::before {
   border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(-45deg);
 }
 details[open] > summary::before { transform: rotate(45deg); }
-.idfields { display: grid; gap: 10px; }
+.idfields { display: grid; gap: 16px; }
+/* 생일 칸은 바로 위 "얼마나 아나요?"에 붙여 한 묶음으로 */
+.idfields > input[name$="bd"] { margin-top: -8px; }
 /* 다닌 학교: 쪽지 쓰기는 종류 + 이름 한 줄, 찾기는 초·중·고·대 네 칸 */
 .school-field { display: grid; gap: 6px; }
 .field-name { font-weight: 700; }
@@ -217,7 +227,7 @@ form details > :not(summary) + :not(summary) { margin-top: 16px; }
 /* 찾은 쪽지: 봉투 카드 */
 .notes { display: grid; gap: 18px; margin: 18px 0; }
 .note-card {
-  position: relative; display: grid; gap: 6px; padding: 24px 20px 20px;
+  position: relative; display: grid; gap: 6px; padding: 24px var(--pad) 20px;
   background: var(--card); border: 1px solid var(--line); border-radius: 4px;
   box-shadow: var(--shadow); text-decoration: none;
 }
@@ -249,7 +259,7 @@ form details > :not(summary) + :not(summary) { margin-top: 16px; }
 
 /* 쪽지 보기: 펼친 편지 한 장 */
 .letter {
-  padding: 26px 22px 22px; transform-origin: 50% 0;
+  padding: 28px var(--pad) 24px; transform-origin: 50% 0;
   background-image: linear-gradient(transparent, var(--crease) 33.3%, transparent 0, var(--crease) 66.6%, transparent 0);
   animation: unfold .55s cubic-bezier(.2, .75, .25, 1) both;
 }
@@ -418,15 +428,16 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 .search-results button span { color: var(--muted); font-size: .9375rem; }
 
 /* 사이트 주소 복사: "find me in korea"가 붙으며 findmeinkorea.com이 되는 팝업 */
-.share { padding-top: 22px; margin-top: 8px; border-top: 1px solid var(--line); }
+.share { padding-top: 30px; margin-top: 8px; border-top: 1px solid var(--line); }
 .share h2 { font-size: 1.25rem; margin-top: 4px; }
 
 /* 화면 한글 자판: 양식의 작은 링크를 누를 때만 나타난다. 켜 두면 링크는 숨긴다 */
 .kbd-open {
-  display: block; width: fit-content; min-height: 40px; margin: -4px 0 8px; padding: 0;
+  display: block; width: fit-content; min-height: 40px; margin: -10px 0 -6px; padding: 0;
   border: 0; background: none; color: var(--muted); cursor: pointer;
   font: 500 .875rem/40px var(--sans); text-decoration: underline; text-underline-offset: 3px;
 }
+.kbd-open:first-child { margin-top: 0; }
 .kbd-on .kbd-open { display: none; }
 .kbd {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500;
@@ -450,7 +461,7 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 /* 자판이 떠 있는 동안 아래 내용과 알림이 가리지 않게 */
 html.kbd-show body { padding-bottom: var(--kbd-h, 260px); }
 html.kbd-show #toast { bottom: calc(var(--kbd-h, 260px) + 12px); }
-.pop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 16px; background: rgba(24, 20, 14, .5); }
+.pop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: var(--gutter); background: rgba(24, 20, 14, .5); }
 .pop-box {
   width: 100%; max-width: 360px; padding: 26px 20px 20px; border-radius: 12px;
   background: var(--card); color: var(--ink); box-shadow: var(--shadow); text-align: center;
