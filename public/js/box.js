@@ -5,7 +5,7 @@ import {
 } from './ui.js';
 import { setupBlock, wireSetup, recoverBlock, wireRecover } from './recovery.js';
 import { mountView, fmtCoord, mapLinks } from './map.js';
-import { readIdFields, makeDoors, placeBlock, wirePlace, readPlace, share, rudeCheck } from './write.js';
+import { readIdFields, makeDoors, placeBlock, wirePlace, readPlace, share, rudeCheck, noteShareText, roomShareText } from './write.js';
 
 const WEEK = 7 * 86400_000;
 const KEEP = 10; // 이전 장소는 최근 10곳까지만 보여 준다 (접속 기록은 서버가 10회만 남긴다)
@@ -279,12 +279,15 @@ function entryItem(post, { officialAllowed, latest = false, mark = '' }) {
 function timeline(ctx, posts, title = '기록', mark = () => '') {
   if (!posts.length) return '';
   const newestFirst = [...posts].reverse();
+  // 쪽지는 새 답장을 위로 빼고 나머지만 여기 오므로, 정말 가장 최근 글일 때만 "제일 최근 기록"
+  // (가족방은 집결지 글을 따로 보여 주고, 여기선 가족 기록 가운데 최근 것을 표시)
+  const newest = ctx.type === 'note' ? ctx.posts.at(-1) : newestFirst[0];
   return `
     <section class="paper">
       <h2>${title}</h2>
       <ol class="timeline">${newestFirst
-        .map((p, i) =>
-          entryItem(p, { officialAllowed: ctx.type === 'room' && p.badge === 'admin', latest: i === 0, mark: mark(p) })
+        .map((p) =>
+          entryItem(p, { officialAllowed: ctx.type === 'room' && p.badge === 'admin', latest: p === newest, mark: mark(p) })
         )
         .join('')}</ol>
     </section>`;
@@ -478,8 +481,10 @@ async function recoveryTools(ctx, mine) {
 
 // 쪽지의 글이 상대에게 닿았는지: 상대가 그 뒤에 글을 남겼거나, 상대의 기억된 기기가 그 뒤에 들어왔으면.
 // 기기를 기억하지 않고 퀴즈로만 열어 본 건 서버가 알 수 없어서 표시하지 못한다.
+// 내가 쓴 글을 상대가 읽었는지. 이 기기 주인이 쓴 글에만 표시한다
+// (받는 사람 화면에서 보낸 사람의 쪽지에 붙으면, 내가 읽은 것이 "상대가 확인"처럼 보인다)
 function readByOther(ctx, post) {
-  if (!Number.isInteger(post.slot)) return false;
+  if (!Number.isInteger(post.slot) || post.slot !== ctx.saved?.slot) return false;
   const other = post.slot === 0 ? 1 : 0;
   return ctx.posts.some((p) => p.slot === other && p.at > post.at) || (ctx.seen[other] || 0) > post.at;
 }
@@ -582,8 +587,8 @@ function noteView(ctx) {
       ctx.offline
         ? ''
         : `<section class="paper tools">
-            ${isSender && !ctx.header.note.mutual ? `<p class="fine">상대에게 미리 알리고 싶다면 사이트 주소만 보내세요.</p>
-              <button class="btn" id="share">주소 보내기</button>` : ''}
+            ${isSender && !ctx.header.note.mutual && !closed ? `<p class="fine">상대에게 미리 알리고 싶다면 보내세요. 쪽지 내용과 답은 들어가지 않아요.</p>
+              <button class="btn" id="share">상대에게 알리기</button>` : ''}
             <div id="recSlot"></div>
           </section>`
     }
@@ -602,7 +607,7 @@ function noteView(ctx) {
   wireIdentity(ctx);
   wireCompose(ctx);
   wireClose(ctx);
-  $('#share')?.addEventListener('click', () => share());
+  $('#share')?.addEventListener('click', () => share(noteShareText()));
   wireRelease(ctx);
   recoveryTools(ctx, isOwner);
 }
@@ -678,12 +683,17 @@ function roomView(ctx) {
     ${ctx.offline ? '' : composeBlock(ctx, { title: '내 상태 남기기', defaultSlot: 1 })}
     ${timeline(ctx, ctx.posts.filter((p) => !(p.body.official && p.badge === 'admin')), '가족 기록')}
     ${ctx.offline ? '' : isAdmin ? adminTools(ctx) : `<section class="paper tools">${inviteBlock(ctx)}<div id="recSlot"></div></section>`}
+    ${ctx.offline ? '' : `<section class="paper tools">
+        <p class="fine">이 가족방을 아직 모르는 가족이 있다면 보내 주세요. 답은 들어가지 않아요.</p>
+        <button class="btn" id="share">가족에게 알리기</button>
+      </section>`}
     <p class="center"><a class="btn ghost" href="#/">처음으로</a></p>
   `);
   mountMaps();
   wireIdentity(ctx);
   wireCompose(ctx);
   if (ctx.offline) return;
+  $('#share').addEventListener('click', () => share(roomShareText(ctx.header.room.title)));
   wireRelease(ctx);
   if (isAdmin) wireAdmin(ctx);
   else wireInvite(ctx);

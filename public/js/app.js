@@ -164,12 +164,11 @@ async function home() {
   const saved = device.list();
   render(`
     <section class="hero">
+      ${BRIDGE}
+      <h1>전쟁이 나면 전화와 메신저는 끊깁니다.<br>하지만 쪽지는 남습니다.</h1>
       <p class="kicker">1950년, 피난민들은 다리 난간과 벽에 쪽지를 붙였습니다.</p>
-      <h1>전쟁이 나면 전화와 국내 메신저는 끊깁니다.<br>하지만 쪽지는 남습니다.</h1>
-      <p class="lede">소중한 사람에게 쪽지와 약속 장소를 남겨 두세요.<br>
-        상대는 언제 어디서든 인터넷만 된다면 <b>자기 이름과 생일</b>로 찾아와 확인할 수 있습니다.<br>
-        국내 메신저망이 먹통이 되더라도, 핸드폰을 잃어버리더라도 오작교의 쪽지는 서로를 연결합니다.</p>
-      <p class="counter" id="counter">&nbsp;</p>
+      <p class="lede">가족과 소중한 사람에게 쪽지와 만날 곳을 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다.</p>
+      <p class="trust">회원가입 없음 · 광고 없음 · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
     </section>
     <nav class="actions">
       <a class="btn primary big" href="#/find">나에게 남겨진 쪽지 확인</a>
@@ -178,6 +177,7 @@ async function home() {
         <a class="btn" href="#/room/new">가족방 만들기</a>
       </div>
     </nav>
+    <p class="counter" id="counter" hidden></p>
     ${
       saved.length
         ? `<section class="saved">
@@ -199,15 +199,8 @@ async function home() {
           </section>`
         : ''
     }
-    <section class="how">
-      <h2>사용 방법</h2>
-      <ol>
-        <li><b>쪽지 남기기</b> — 받는 사람의 이름과 아는 정보(생일, 나이, 전화번호)를 적고, 둘만 아는 질문을 정합니다. 남겨진 쪽지는 영구히 남습니다.</li>
-        <li><b>상대가 찾기</b> — 상대는 자기 이름과 생일만 넣으면 자기 앞으로 온 쪽지를 봅니다. 미리 알려 줘도 되고, 몰래 남겨 둬도 됩니다.</li>
-        <li><b>퀴즈를 풀면</b> — 메시지, 약속 장소, 보낸 사람의 마지막 접속이 보입니다. 장소가 바뀌면 계속 이어서 남길 수 있습니다.</li>
-      </ol>
-      <p class="fine">가족은 <a href="#/room/new">가족방</a>을 만들어 집결지와 서로의 상태를 한곳에서 확인하세요.</p>
-    </section>
+    ${saved.length ? '' : demoBlock()}
+    ${saved.some((b) => b.type === 'room') ? '' : whyBlock()}
     <section class="share">
       <h2>미리 알려 두세요</h2>
       <p>주소는 <b>find me in korea</b>, 네 단어를 붙여 쓰면 됩니다. 평소에 가족과 소중한 사람에게 보내 두세요.</p>
@@ -216,6 +209,7 @@ async function home() {
     ${supportBlock()}
   `);
   $('#copySite').addEventListener('click', copySite);
+  wireDemo();
   if (saved.length) peekNews(saved);
   document.querySelectorAll('[data-del]').forEach((b) =>
     b.addEventListener('click', () => {
@@ -237,12 +231,129 @@ async function home() {
     toast('이 기기에서 모두 지웠어요.');
     home();
   });
+  // 숫자가 작을 땐 "아무도 안 쓰는 곳"으로 읽히니 보이지 않는다. 오늘 수 대신 줄지 않는 누적 수
   try {
     const s = await api.stats();
-    $('#counter').innerHTML = `오늘 <b>${s.today.toLocaleString()}</b>장의 쪽지가 남겨졌습니다`;
-  } catch {
-    $('#counter').textContent = '';
-  }
+    const el = $('#counter');
+    if (el && s.total >= COUNTER_MIN) {
+      el.innerHTML = `지금까지 쪽지와 가족방 <b>${s.total.toLocaleString()}</b>개가 남겨졌습니다`;
+      el.hidden = false;
+    }
+  } catch {}
+}
+
+const COUNTER_MIN = 100;
+const SOURCE_URL = 'https://github.com/EDENGNIZO/ojakgyo';
+
+// 첫 화면 그림: 견우·직녀 두 별 사이에 까치들이 놓은 다리. 선 몇 줄이라 따로 받을 파일이 없다
+const BRIDGE = (() => {
+  const birds = [[54, 48], [81, 40], [107, 33], [134, 29], [160, 28], [186, 29], [213, 33], [239, 40], [266, 48]]
+    .map(([x, y], i) => {
+      const w = i % 2 ? 5 : 6;
+      return `<path style="--i:${i}" d="M${x - 9} ${y}q4.5-${w} 9 0q4.5-${w} 9 0"/>`;
+    })
+    .join('');
+  const star = (x) => `<path transform="translate(${x} 62)" d="M0-6L1.6-1.6L6 0L1.6 1.6L0 6L-1.6 1.6L-6 0L-1.6-1.6Z"/>`;
+  return `<svg class="bridge" viewBox="0 0 320 72" aria-hidden="true" focusable="false">
+    <path class="b-arc" d="M28 64Q160 0 292 64"/><g class="b-birds">${birds}</g><g class="b-stars">${star(14)}${star(306)}</g></svg>`;
+})();
+
+// ---------- 체험용 쪽지 (서버 없이 화면 안에서만) ----------
+
+const DEMO_ANSWER = '왕만두';
+const FAQ = [
+  ['상대에게 미리 알려야 하나요?', '알려도 되고, 몰래 남겨 둬도 돼요. 상대가 언젠가 자기 이름과 생일로 찾으면 보여요.'],
+  ['상대 생일을 정확히 몰라요.', '출생연도나 월·일만 알아도 남길 수 있어요. 전화번호를 함께 적으면 더 정확히 찾아요.'],
+  ['회원가입이 필요한가요?', '아니요. 이름과 생일, 둘만 아는 질문이면 충분해요.'],
+  ['쪽지는 언제까지 남나요?', '지우기 전까지 계속 남아요. 만날 곳이 바뀌면 같은 쪽지에 이어서 남길 수 있어요.'],
+  ['폰을 잃어버리면요?', '다른 폰에서 이름과 생일로 다시 찾아 답을 넣으면 돼요.'],
+  ['운영자는 쪽지를 볼 수 있나요?', '볼 수 없어요. 쪽지는 내 폰 안에서 잠긴 채로 서버에 가요. <a href="#/about">쪽지는 어떻게 지켜지나요?</a>'],
+];
+
+function demoBlock() {
+  return `
+    <section class="demo">
+      <h2>이렇게 열려요</h2>
+      <ol class="steps">
+        <li>쪽지를 남겨요</li>
+        <li>상대가 이름·생일로 찾아요</li>
+        <li>답을 맞히면 열려요</li>
+      </ol>
+      <div id="demoBox">${demoLocked()}</div>
+      <details class="faq">
+        <summary>자주 묻는 질문</summary>
+        <dl>${FAQ.map(([q, a]) => `<dt>${q}</dt><dd>${a}</dd>`).join('')}</dl>
+      </details>
+    </section>`;
+}
+
+function demoLocked() {
+  return `
+    <p class="hint">체험용 쪽지예요. 김민준이 자기 이름과 생일로 찾았더니 이게 보였어요.</p>
+    <form class="note-card demo-card" id="demoForm" novalidate>
+      <span class="tape"></span>
+      <span class="nc-kind">쪽지</span>
+      <span class="nc-meta">생일까지 일치 · 이번 달 남김</span>
+      <span class="nc-q">Q. 우리 집 첫 강아지 이름은?</span>
+      <span class="demo-row">
+        <input name="a" autocomplete="off" autocapitalize="off" enterkeyhint="go" placeholder="체험용 답: 왕만두" aria-label="답">
+        <button class="btn primary" type="submit">열기</button>
+      </span>
+      <span class="hint" id="demoErr" hidden>틀렸어요. 체험용 답은 「왕만두」예요.</span>
+    </form>`;
+}
+
+function demoOpen() {
+  return `
+    <article class="paper letter">
+      <p class="kicker">쪽지 · 체험용</p>
+      <h1>엄마 → 김민준</h1>
+      <div class="letter-body">민준아, 연락이 안 되면 할머니 댁 앞 놀이터로 와.<br>매일 오후 3시에 거기서 기다릴게.</div>
+      <p class="e-place">📍 할머니 댁 앞 놀이터 (○○동 ○○아파트 정문)</p>
+      <p class="sig">— 엄마, 3일 전</p>
+    </article>
+    <p class="hint">진짜 쪽지는 이 답이 내 폰 안에서 열쇠가 되어 열려요. 서버는 답도 내용도 모릅니다.</p>
+    <div class="row2">
+      <button type="button" class="btn" id="demoAgain">다시 잠그기</button>
+      <a class="btn primary" href="#/write">나도 남기기</a>
+    </div>`;
+}
+
+function wireDemo() {
+  const box = $('#demoBox');
+  if (!box) return;
+  box.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const a = e.target.a;
+    if (a.value.replace(/\s+/g, '') !== DEMO_ANSWER) {
+      $('#demoErr').hidden = false;
+      return a.focus();
+    }
+    // 진짜 쪽지처럼 잠깐 열쇠를 만드는 시간을 보여 준다
+    busy('열쇠를 만드는 중…');
+    setTimeout(() => {
+      busy();
+      box.innerHTML = demoOpen();
+    }, 600);
+  });
+  box.addEventListener('click', (e) => {
+    if (e.target.id === 'demoAgain') box.innerHTML = demoLocked();
+  });
+}
+
+// 왜 지금인가: 멀게 느껴지는 전쟁 대신 이미 겪은 날
+function whyBlock() {
+  return `
+    <section class="why">
+      <h2>그날, 가족과 만날 곳을 정해 두셨나요?</h2>
+      <p>2022년 10월 15일엔 카카오톡이 멈췄고, 2023년 5월 31일 아침엔 서울에 경계경보 문자가 울렸습니다. 연락이 끊기면 미리 해 둔 약속만 남습니다.</p>
+      <ul class="points">
+        <li>가족 모두가 같은 <b>집결지</b>를 봐요</li>
+        <li>각자 <b>"무사해요"</b> 같은 안부를 남겨요</li>
+        <li>폰을 잃어도 <b>이름과 생일</b>로 다시 들어와요</li>
+      </ul>
+      <a class="btn primary" href="#/room/new">우리 가족 집결지 정하기 <span class="sub">약 3분</span></a>
+    </section>`;
 }
 
 // ---------- 찾기 ----------
@@ -407,7 +518,8 @@ function noteCard(r, i, hidden) {
         <span class="nc-meta">${r.level === 'sent' ? '' : `${esc(matchLabel(r))} · `}${esc(madeLabel(r))}</span>
         ${
           tag === 'a'
-            ? questions(r.teaser.q).map((q) => `<span class="nc-q">Q. ${esc(q)}</span>`).join('')
+            ? questions(r.teaser.q).map((q) => `<span class="nc-q">Q. ${esc(q)}</span>`).join('') +
+              '<span class="nc-open">답을 넣어 열기 ›</span>'
             : '<span class="nc-meta">질문은 받는 사람에게만 보여요</span>'
         }
       </${tag}>
@@ -433,7 +545,7 @@ function results() {
   const top = group ? shown.filter(sure) : shown;
   const rest = group ? shown.filter((r) => !sure(r)) : [];
   render(`
-    <section>
+    <section class="results">
       <h1>${esc(name)}님 앞으로 남겨진 것</h1>
       ${
         shown.length
@@ -451,7 +563,11 @@ function results() {
              }`
           : `<div class="paper empty">
                <p><b>${hidden.length ? '보이는 쪽지가 없어요.' : '아직 남겨진 쪽지가 없어요.'}</b></p>
-               <p>누군가 쪽지를 남기면 여기서 확인할 수 있어요. 가끔 다시 들러 보세요.</p>
+               <p>누군가 남기면 여기서 볼 수 있어요. 기다리는 대신 내가 먼저 남겨 두면, 상대도 나를 찾을 수 있어요.</p>
+               <div class="row2">
+                 <a class="btn primary" href="#/write">쪽지 남기기</a>
+                 <a class="btn" href="#/room/new">가족방 만들기</a>
+               </div>
              </div>`
       }
       ${
@@ -463,10 +579,14 @@ function results() {
              </details>`
           : ''
       }
-      <div class="row2">
-        <a class="btn" href="#/find">다른 정보로 다시 찾기</a>
-        <a class="btn" href="#/write">내가 쪽지 남기기</a>
-      </div>
+      ${
+        shown.length
+          ? `<div class="row2">
+               <a class="btn" href="#/find">다시 찾기</a>
+               <a class="btn" href="#/write">내가 쪽지 남기기</a>
+             </div>`
+          : '<a class="btn wide" href="#/find">다른 정보로 다시 찾기</a>'
+      }
     </section>
   `);
   for (const b of $$('[data-hide]')) {
@@ -577,6 +697,7 @@ function about() {
       <p class="lede"><b>오작교 서버에는 읽을 수 있는 개인정보가 없습니다.</b>
         쪽지는 여러분의 기기 안에서 잠긴 뒤에 서버로 가고, 그 자물쇠를 여는 열쇠는 둘만 아는 질문의 답에서만 나옵니다.
         답과 열쇠는 어떤 경우에도 서버로 보내지 않습니다.</p>
+      <p class="open-src"><b>코드는 모두 공개되어 있습니다.</b> 아래 설명이 사실인지 <a href="${SOURCE_URL}" target="_blank" rel="noopener">GitHub</a>에서 누구나 직접 확인할 수 있어요.</p>
 
       <h2>세 가지 원칙</h2>
       <ul>
@@ -629,7 +750,7 @@ function about() {
         <li>스팸이나 욕설 쪽지는 답을 맞힌 받는 사람이 지울 수 있습니다. 지운 쪽지는 누구도 다시 찾을 수 없습니다.</li>
       </ul>
 
-      <h2>개인정보 처리 (초안)</h2>
+      <h2>개인정보 처리</h2>
       <ul>
         <li>이름·생일·전화번호는 원문으로 받지 않습니다. 기기에서 계산한 값만 저장합니다.</li>
         <li>IP 주소는 저장하지 않습니다. 반복 시도를 세기 위해 날마다 바뀌는 해시값을 최대 하루 동안만 쓰고 지웁니다.</li>
@@ -639,6 +760,11 @@ function about() {
         <li>14세 미만 자녀는 보호자가 가족방 구성원으로 등록해 주세요.</li>
         <li>"이 기기 기억하기"를 고르면 열쇠가 이 기기 브라우저에 저장됩니다. 남의 기기에서는 고르지 마세요.</li>
       </ul>
+      <h2>누가 운영하나요?</h2>
+      <p>오작교는 개인이 만들어 운영하는 민간 서비스입니다. 회원가입도 광고도 없고, 쪽지 내용은 운영자도 볼 수 없습니다.
+        사이트를 움직이는 코드는 <a href="${SOURCE_URL}" target="_blank" rel="noopener">GitHub</a>에 모두 공개되어 있습니다.</p>
+      <p>문의나 오류 제보는 <a href="${SOURCE_URL}/issues" target="_blank" rel="noopener">GitHub 이슈</a>로 남겨 주세요.
+        보안 허점은 공개 이슈 대신 <a href="${SOURCE_URL}/security/advisories/new" target="_blank" rel="noopener">비공개 보안 제보</a>로 알려 주세요.</p>
       <p class="fine">오작교는 민간 서비스이며 정부·공공기관의 공식 대피 체계를 대신하지 않습니다. 실제 대피는 재난 문자와 공식 안내를 따르세요.</p>
     </section>
   `);

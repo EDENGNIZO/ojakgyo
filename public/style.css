@@ -27,15 +27,7 @@
   --serif: "AppleMyungjo", "Noto Serif KR", "Noto Serif CJK KR", "Nanum Myeongjo", "Batang", serif;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #181715; --card: #221f1b; --ink: #ede5d5; --muted: #aaa191; --line: #3a362e; --edge: #7b7364;
-    --accent: #a9bdeb; --fill: #4a69ab; --on-ink: #f6efe0; --ok: #8cc79a; --warn: #e3b866; --warn-bg: #33291a;
-    --warn-line: #b8862e; --seal: #e5826b; --help: #d8a3cc; --flap: #2b2823; --rule: rgba(169, 189, 235, .13);
-    --crease: rgba(0, 0, 0, .3); --laid: rgba(255, 240, 210, .02); --tape: rgba(130, 112, 72, .55);
-    --shadow: 0 1px 1px rgba(0, 0, 0, .3), 0 12px 26px -14px rgba(0, 0, 0, .7); color-scheme: dark;
-  }
-}
+/* 밤 화면은 오른쪽 위 버튼으로 고른 사람만 (처음엔 폰 설정과 상관없이 낮) */
 [data-theme="dark"] {
   --paper: #181715; --card: #221f1b; --ink: #ede5d5; --muted: #aaa191; --line: #3a362e; --edge: #7b7364;
   --accent: #a9bdeb; --fill: #4a69ab; --on-ink: #f6efe0; --ok: #8cc79a; --warn: #e3b866; --warn-bg: #33291a;
@@ -65,7 +57,7 @@ p { margin: 0 0 .8em; }
 .mast, #app, .foot { max-width: 600px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
 .mast { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 6px; }
 /* 이름표: 제목(h1·h2)과 같은 명조·같은 잉크색 한 가지로 */
-.logo { display: inline-flex; align-items: center; min-height: 48px; color: var(--ink); font: 700 1.25rem/1 var(--serif); letter-spacing: .02em; text-decoration: none; }
+.logo { display: inline-flex; flex: none; align-items: center; min-height: 48px; color: var(--ink); font: 700 1.25rem/1 var(--serif); letter-spacing: .02em; text-decoration: none; white-space: nowrap; }
 /* 봉투 그림 (로고·첫 버튼): 테두리 + V자 날개 + 인주 점 */
 .logo::before, .actions .big::before {
   content: ""; flex: none; width: 24px; height: 17px;
@@ -103,15 +95,24 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 }
 
 /* 첫 화면 */
-.hero { padding: 26px 0 0; }
+.hero { padding: 18px 0 0; }
+/* 견우·직녀 별 사이 까치 다리: 까치가 한 마리씩 내려앉는다 */
+.bridge { display: block; width: 100%; max-width: 300px; height: auto; margin: 0 0 10px; }
+.b-arc { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; }
+.b-birds { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.b-birds path { animation: bird-in .5s cubic-bezier(.2, .75, .25, 1) both; animation-delay: calc(var(--i) * 70ms); }
+.b-stars { fill: var(--seal); }
+@keyframes bird-in { from { opacity: 0; transform: translateY(-8px); } }
 /* 다리 난간에 붙였던 쪽지 한 장 */
 .hero .kicker {
-  position: relative; display: inline-block; margin: 6px 0 22px; padding: 12px 14px 10px;
+  position: relative; display: inline-block; margin: 4px 0 20px; padding: 12px 14px 10px;
   background: var(--card); color: var(--ink); font-family: var(--serif); box-shadow: var(--shadow); transform: rotate(-1.2deg);
 }
 .hero .kicker::before { content: ""; position: absolute; top: -9px; left: 50%; width: 64px; height: 18px; margin-left: -32px; background: var(--tape); transform: rotate(3deg); }
 .hero h1 { font-size: 1.875rem; line-height: 1.38; margin-bottom: .6em; }
-.counter { margin: 18px 0 0; padding-top: 14px; border-top: 1px dashed var(--line); color: var(--muted); font-size: .9375rem; }
+.trust { color: var(--muted); font-size: .9375rem; margin: 0; }
+.trust a { color: var(--accent); }
+.counter { margin: -14px 0 26px; color: var(--muted); font-size: .9375rem; text-align: center; }
 /* 소인(消印) 물결 */
 .counter::before {
   content: ""; display: inline-block; width: 28px; height: 11px; margin-right: 10px; vertical-align: -1px;
@@ -121,16 +122,33 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 .actions { display: grid; gap: 10px; margin: 24px 0 30px; }
 .actions .row2 { margin: 0; }
 .actions .big::before { border-color: var(--on-ink); color: var(--on-ink); }
-.how { padding-top: 22px; border-top: 1px solid var(--line); }
-.how h2 { font-size: 1.25rem; }
-.how ol { list-style: none; margin: 0 0 16px; padding: 0; counter-reset: s; display: grid; gap: 14px; }
-.how li { counter-increment: s; position: relative; padding-left: 44px; }
-.how li::before {
-  content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px;
-  display: grid; place-items: center; border: 1.5px solid var(--accent); border-radius: 50%;
-  color: var(--accent); font: 700 .9375rem/1 var(--serif);
+/* 이렇게 열려요: 세 단계 + 체험용 쪽지 */
+.demo, .why { padding-top: 22px; margin-bottom: 26px; border-top: 1px solid var(--line); }
+.demo h2, .why h2 { font-size: 1.25rem; margin-top: 4px; }
+.steps { list-style: none; margin: 4px 0 18px; padding: 0; counter-reset: s; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; font-size: .9375rem; font-weight: 600; line-height: 1.4; }
+.steps li { counter-increment: s; display: grid; justify-items: center; align-content: start; gap: 6px; }
+.steps li::before {
+  content: counter(s); width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1.5px solid var(--accent); border-radius: 50%; color: var(--accent); font: 700 .9375rem/1 var(--serif);
 }
-.saved h2, .how h2 { margin-top: 4px; }
+.demo-card { margin: 14px 0 4px; }
+.demo-row { display: flex; gap: 8px; margin-top: 8px; }
+.demo-row input { flex: 1; min-width: 0; }
+.demo-row .btn { flex: none; }
+.demo .letter { margin-top: 14px; }
+.faq { margin-top: 14px; }
+.faq dl { margin: 0 0 6px; display: grid; gap: 12px; }
+.faq dt { font-weight: 700; }
+.faq dd { margin: 2px 0 0; color: var(--muted); }
+/* 그날: 가족방이 해 주는 세 가지 */
+.points { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 8px; }
+.points li { position: relative; padding-left: 26px; }
+.points li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 10px; height: 10px; border: 2px solid var(--accent); border-radius: 50%; }
+.why .btn { width: 100%; }
+.btn .sub { font-weight: 400; font-size: .9375rem; opacity: .85; }
+.btn.wide { width: 100%; margin-top: 4px; }
+.empty .row2 { margin-top: 16px; }
+.saved h2 { margin-top: 4px; }
 
 /* 버튼: 모두 48px 이상 */
 .btn {
@@ -147,6 +165,8 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 .btn.small { min-height: 48px; padding: 8px 14px; font-size: .9375rem; border-radius: 10px; }
 .btn.ghost { border-color: transparent; background: none; text-decoration: underline; text-underline-offset: 4px; }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 0; }
+/* 두 칸 버튼은 좌우 여백을 줄여 "상대에게 알리기" 같은 글이 360px 폰에서도 한 줄로 */
+.row2 > .btn { padding-left: 12px; padding-right: 12px; }
 .row2.tight { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0; }
 .choices { display: grid; gap: 10px; margin: 16px 0; }
 
@@ -214,6 +234,8 @@ details[open] > summary::before { transform: rotate(45deg); }
 .nc-kind { font-weight: 800; }
 .nc-meta { color: var(--muted); font-size: .9375rem; }
 .nc-q { font-family: var(--serif); font-size: 1.125rem; }
+.nc-open { justify-self: end; margin-top: 4px; color: var(--accent); font-size: .9375rem; font-weight: 700; }
+.results { padding-top: 16px; }
 .empty { text-align: center; }
 .card { display: flex; align-items: center; gap: 6px; margin: 8px 0; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding-right: 6px; }
 .card-main, .card.link { display: flex; align-items: center; gap: 10px; flex: 1; min-height: 56px; padding: 14px 16px; text-decoration: none; min-width: 0; }
@@ -330,6 +352,14 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 .recovery .code { border: 0; padding: 6px 0 10px; }
 .recovery .btn.primary { background: none; color: var(--accent); border-color: currentColor; }
 .quiz-pair { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+/* 선택 항목 접기 (쪽지 쓰기의 내 생일) */
+.more > summary { font-weight: 600; }
+.more[open] > summary { margin-bottom: 4px; }
+/* 만든 직후 보낼 글 미리보기 */
+.share-preview { margin: 0 0 12px; padding: 12px 14px; border-left: 3px solid var(--accent); background: var(--paper); border-radius: 0 10px 10px 0; font-size: .9375rem; }
+/* 안내문 맨 위: 코드 공개 */
+.open-src { padding: 12px 14px; border: 1.5px dashed var(--accent); border-radius: 10px; }
+.open-src a { color: var(--accent); }
 /* 좋은/안 좋은 질문 예: 파란 글자를 누르면 칸이 커지며 보인다 */
 .eg > summary { min-height: 44px; color: var(--accent); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
 .eg ul { list-style: none; margin: 0 0 8px; padding: 12px 14px; display: grid; gap: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }

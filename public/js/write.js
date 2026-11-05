@@ -113,21 +113,40 @@ function readPlace(form, prefix, state) {
 const Q_MAX = 50;
 
 // 질문 묶음. 쪽지는 기본 1개(원하면 하나 더), 가족방은 3개. 여러 개면 모두 맞혀야 열림
-// 가족방 질문을 고를 때 참고할 좋은 예·안 좋은 예. 눌러야 펼쳐진다 (화면을 길게 만들지 않게)
-function quizExamples() {
-  const li = (q, why) => `<li><b>${q}</b><span>${why}</span></li>`;
+// 질문을 고를 때 참고할 좋은 예·안 좋은 예. 눌러야 펼쳐진다 (화면을 길게 만들지 않게)
+const EXAMPLES = {
+  room: {
+    good: [
+      ['고모의 이름은?', '가족 모두가 아는 사람의 이름이라 기억해 내기 쉽고, 다른 사람은 맞히기 어려워요.'],
+      ['할머니 성함은?', '가족은 다 알지만 지인은 거의 모르는 이름이에요.'],
+      ['외삼촌의 이름은?', '아빠 쪽과 엄마 쪽 친척을 섞어 두면, 어느 한쪽 사람이 세 답을 다 알기는 어려워요.'],
+      ['우리 집 첫 강아지 이름은?', '가족 모두가 기억하고 시간이 지나도 바뀌지 않는 이름이에요. 초코·보리처럼 흔한 이름이면 다른 질문을 고르세요.'],
+    ],
+    bad: [
+      ['○○이 좋아하는 색깔은?', '답이 될 만한 것이 몇 가지뿐이라 하나씩 넣어 보면 맞혀져요.'],
+      ['○○이 좋아하는 음식은?', '시기마다 바뀌고 식구마다 다르게 기억해서, 정작 가족이 못 열 수 있어요.'],
+      ['○○이 살던 동네는?', '지인이나 이웃도 답을 알 수 있어요.'],
+    ],
+  },
+  note: {
+    good: [
+      ['네 첫 반려동물 이름은?', '받는 사람은 바로 떠올리고, 시간이 지나도 바뀌지 않아요. 초코·보리처럼 흔한 이름이면 피하세요.'],
+      ['네 외할머니 성함은? (성 포함 3글자)', '가족은 알지만 친구나 지인은 거의 몰라요.'],
+      ['고2 때 매일 가던 분식집 이름은?', '받는 사람의 기억 속 고유한 이름이라 남이 짐작하기 어려워요.'],
+    ],
+    bad: [
+      ['내가 부르던 너의 별명은?', '받는 사람은 보낸 사람이 누군지 모른 채 질문을 봐서, 누가 부르던 별명인지 알 수 없어요.'],
+      ['네가 좋아하는 색깔은?', '답이 몇 가지뿐이라 하나씩 넣어 보면 맞혀져요.'],
+      ['네 생일은?', '찾을 때 이미 넣는 정보라 남도 알 수 있어요.'],
+    ],
+  },
+};
+function quizExamples(kind) {
+  const li = ([q, why]) => `<li><b>${q}</b><span>${why}</span></li>`;
+  const { good, bad } = EXAMPLES[kind];
   return `
-    <details class="eg good"><summary>좋은 질문 예</summary><ul>
-      ${li('고모의 이름은?', '가족 모두가 아는 사람의 이름이라 기억해 내기 쉽고, 다른 사람은 맞히기 어려워요.')}
-      ${li('할머니 성함은?', '가족은 다 알지만 지인은 거의 모르는 이름이에요.')}
-      ${li('외삼촌의 이름은?', '아빠 쪽과 엄마 쪽 친척을 섞어 두면, 어느 한쪽 사람이 세 답을 다 알기는 어려워요.')}
-      ${li('우리 집 첫 강아지 이름은?', '가족 모두가 기억하고 시간이 지나도 바뀌지 않는 이름이에요. SNS에 올린 적 없는 이름이면 더 좋아요.')}
-    </ul></details>
-    <details class="eg bad"><summary>안 좋은 질문 예</summary><ul>
-      ${li('○○이 좋아하는 색깔은?', '답이 될 만한 것이 몇 가지뿐이라 하나씩 넣어 보면 맞혀져요.')}
-      ${li('○○이 좋아하는 음식은?', '시기마다 바뀌고 식구마다 다르게 기억해서, 정작 가족이 못 열 수 있어요.')}
-      ${li('○○이 살던 동네는?', '지인이나 이웃도 답을 알 수 있어요.')}
-    </ul></details>`;
+    <details class="eg good"><summary>좋은 질문 예</summary><ul>${good.map(li).join('')}</ul></details>
+    <details class="eg bad"><summary>안 좋은 질문 예</summary><ul>${bad.map(li).join('')}</ul></details>`;
 }
 
 function quizBlock(placeholders, { note = false, extra = null } = {}) {
@@ -140,21 +159,19 @@ function quizBlock(placeholders, { note = false, extra = null } = {}) {
     </div>`;
   return (
     (note
-      ? `<p class="caution"><b>받는 사람은 보낸 사람이 누군지 모른 채 질문을 봐요.</b> 질문을 낼 때 참고하세요.
-          "내가 부르던 너의 별명은?"처럼 내가 누군지 알아야 풀 수 있는 질문은 피하고, 받는 사람이 스스로 아는 걸 물어보세요.
-          예: "네가 다니던 초등학교 이름은?" (답: ○○초등학교)</p>`
+      ? `<p class="caution"><b>받는 사람이 스스로 아는 걸 물어보세요.</b> 받는 사람은 보낸 사람이 누군지 모른 채 질문을 봐요.</p>`
       : '') +
     placeholders.map((ph, i) => pair(ph, i, many)).join('') +
     (extra
       ? `<div id="extraQ" hidden>${pair(extra, placeholders.length, false)}</div>
          <div id="addQWrap">
            <button type="button" class="btn small ghost" id="addQ">+ 질문 하나 더 (더 안전하게)</button>
-           <p class="hint">질문을 하나 더 넣으면 쪽지 보안이 올라가요. 두 답을 모두 맞혀야 열려서, 한 가지를 우연히 아는 사람은 열 수 없어요.</p>
+           <p class="hint">두 답을 모두 맞혀야 열려서, 한 가지를 우연히 아는 사람은 열 수 없어요.</p>
          </div>`
       : '') +
     `<p class="hint">${
       note
-        ? '질문에 이름이나 속마음은 직접 쓰지 마세요. 받는 사람의 정보를 아는 사람은 질문까지는 볼 수 있어요.'
+        ? '질문은 받는 사람의 이름·생일을 아는 남도 볼 수 있어요. 속마음은 남길 말에 적어 주세요.'
         : '가족 한 명의 이름과 생일을 아는 사람은 질문까지는 볼 수 있어요.'
     }
       답의 띄어쓰기·대소문자는 구분하지 않아요.${many ? ' 답을 모두 맞혀야 열려요.' : ''}</p>`
@@ -254,21 +271,26 @@ export async function writeNote() {
         <fieldset class="me">
           <legend><span class="num">2</span> 보내는 사람 <span class="opt">나</span></legend>
           <label>내 이름 <input name="fromName" maxlength="40" required placeholder="예: 김민준">
-            <span class="hint">답을 맞힌 사람에게만 보여요. 상대가 생일을 몰라도 이름끼리 찾을 수 있게 쓰여요.</span></label>
-          <label>내 생일 <span class="opt">선택</span> <input name="fromBd" inputmode="numeric" placeholder="예: 19950314">
-            <span class="hint">적어 두면 폰을 바꿔도 내 이름과 생일로 이 쪽지를 다시 찾을 수 있어요.</span></label>
+            <span class="hint">답을 맞힌 사람에게만 보여요.</span></label>
+          <details class="more" id="meMore">
+            <summary>내 생일도 적기 <span class="opt">선택</span></summary>
+            <label>내 생일 <input name="fromBd" inputmode="numeric" placeholder="예: 19950314">
+              <span class="hint">적어 두면 폰을 바꿔도 내 이름과 생일로 이 쪽지를 다시 찾을 수 있어요.</span></label>
+          </details>
         </fieldset>
         <fieldset>
           <legend><span class="num">3</span> 쪽지</legend>
           <label>남길 말 <textarea name="text" rows="5" maxlength="2000" required
             placeholder="예: 무슨 일이 생기면 여기서 기다릴게. 매일 정오부터 한 시간."></textarea>
-            <span class="hint">끝에 둘만 아는 이야기를 한 줄 더하면(함께 간 곳, 부르던 별명처럼) 상대가 사칭이 아닌 걸 알아보기 쉬워요. 질문과 다른 이야기일수록 더 확실해요.</span></label>
-          <label class="check"><input type="checkbox" name="withPlace" checked> 약속 장소 정하기</label>
-          <div id="placeWrap">${placeBlock('p')}</div>
+            <span class="hint">끝에 둘만 아는 이야기를 한 줄 더하면 상대가 진짜 나인 걸 알아봐요.</span></label>
+          <label class="check"><input type="checkbox" name="withPlace"> 약속 장소도 남기기
+            <span class="hint">연락이 끊겨도 만날 수 있게 장소와 시간을 정해 두세요.</span></label>
+          <div id="placeWrap" hidden>${placeBlock('p')}</div>
         </fieldset>
         <fieldset>
           <legend><span class="num">4</span> 둘만 아는 질문</legend>
-          ${quizBlock(['예: 고2 때 매일 같이 가던 분식집 이름은?'], { note: true, extra: '예: 네가 다니던 초등학교 이름은?' })}
+          ${quizBlock(['예: 네 첫 반려동물 이름은?'], { note: true, extra: '예: 네 외할머니 성함은? (성 포함 3글자)' })}
+          ${quizExamples('note')}
         </fieldset>
         <fieldset>
           <label class="check"><input type="checkbox" name="mutual"> <b>💌 맞쪽지로 보내기</b> <span class="opt">상대도 나에게 써야 열려요</span></label>
@@ -298,6 +320,7 @@ export async function writeNote() {
   f.withPlace.addEventListener('change', () => ($('#placeWrap').hidden = !f.withPlace.checked));
   const syncMutual = () => {
     $('#mutualHelp').hidden = !f.mutual.checked;
+    if (f.mutual.checked) $('#meMore').open = true;
     $('#mutualBd').hidden = !!f.fromBd.value.trim();
   };
   f.mutual.addEventListener('change', syncMutual);
@@ -313,13 +336,18 @@ export async function writeNote() {
     if (to.error) return showError(to.error);
     if (!fromName) return showError('내 이름을 적어 주세요.');
     const fromYmd = f.fromBd.value.trim() ? C.normDate(f.fromBd.value) : null;
-    if (f.fromBd.value.trim() && !fromYmd) return showError('내 생일을 8자리 숫자로 적어 주세요. 예: 19950314');
+    if (f.fromBd.value.trim() && !fromYmd) {
+      $('#meMore').open = true;
+      return showError('내 생일을 8자리 숫자로 적어 주세요. 예: 19950314');
+    }
     if (!text) return showError('남길 말을 적어 주세요.');
     // 맞쪽지는 이름만으로 맞추면 동명이인끼리 섞인다. 서로 출생연도(앞뒤 1년)까지 알아야 열린다
     if (f.mutual.checked && !to.ymd && !to.year)
       return showError('맞쪽지는 받는 사람의 생일이나 출생연도(나이)를 알아야 보낼 수 있어요. 이름이 같은 다른 사람과 섞이지 않게요.');
-    if (f.mutual.checked && !fromYmd)
+    if (f.mutual.checked && !fromYmd) {
+      $('#meMore').open = true;
       return showError('맞쪽지는 내 생일을 적어야 보낼 수 있어요. 상대가 내 이름과 출생연도까지 알고 쓸 때만 열려요.');
+    }
     let p = null;
     if (f.withPlace.checked) {
       const r = readPlace(f, 'p', place);
@@ -391,6 +419,12 @@ export function shareText() {
   return `오작교: 전쟁이 나면 전화와 메신저는 끊겨도 쪽지는 남아요. 혹시 나에게 남겨진 쪽지가 있는지 확인해 보세요. ${location.origin}`;
 }
 
+export const noteShareText = () =>
+  `오작교에 쪽지를 남겨 두었어요. 연락이 끊기면 ${location.origin} 에서 이름과 생일로 찾아 주세요. 둘만 아는 질문에 답하면 열려요.`;
+export const roomShareText = (title) =>
+  `[오작교] 「${title}」 가족방을 만들었어요. 연락이 끊기면 여기서 집결지와 서로 안부를 확인해요.\n` +
+  `${location.origin} → "나에게 남겨진 쪽지 확인" → 내 이름과 생일 → 가족만 아는 질문 3개`;
+
 export async function share(text = shareText()) {
   try {
     if (navigator.share) return await navigator.share({ text });
@@ -417,18 +451,18 @@ function noteDone(target, { toName, fromName, fromBd }, mutual) {
       <p class="caution">혹시 ${esc(toName)}님도 나에게 쪽지나 맞쪽지를 남겼다면, 지금 찾을 수 있어요.
         <a href="#/find" id="findBack">${esc(toName)}님이 남긴 쪽지 찾아보기</a></p>
       <ul class="plain">
-        ${mutual ? '' : '<li>약속을 미리 알리고 싶다면 사이트 주소만 보내 주세요. 쪽지 내용은 보내지 않아도 돼요.</li>'}
+        ${mutual ? '' : '<li>미리 알리고 싶다면 "상대에게 알리기"로 보내세요. 쪽지 내용과 답은 들어가지 않아요.</li>'}
         <li>몰래 남긴 쪽지라면 그대로 두세요. 상대가 언젠가 직접 찾아올 수 있어요.</li>
         <li>이 기기는 보낸 사람으로 기억돼서, 나중에 장소가 바뀌면 이어서 남길 수 있어요.</li>
       </ul>
-      ${setupBlock('note')}
       <div class="row2">
-        ${mutual ? '' : '<button class="btn" id="share">주소 보내기</button>'}
+        ${mutual ? '' : '<button class="btn" id="share">상대에게 알리기</button>'}
         <a class="btn primary" href="#/box/${esc(target.id)}">내 쪽지 보기</a>
       </div>
+      ${setupBlock('note')}
     </section>
   `);
-  $('#share')?.addEventListener('click', () => share());
+  $('#share')?.addEventListener('click', () => share(noteShareText()));
   // 맞쪽지는 이름끼리 맞춰 열리니, 상대 이름을 "남겼을 것 같은 사람"에 넣어 찾아야 보인다
   $('#findBack').addEventListener('click', () => {
     try {
@@ -486,7 +520,7 @@ export async function createRoom() {
           <legend><span class="num">4</span> 가족만 아는 질문</legend>
           ${quizBlock(['예: 할아버지 성함은? (성 포함 3글자)', '예: 외할아버지 성함은? (성 포함 3글자)', '예: 이모의 이름은? (성 포함 3글자)'])}
           <p class="hint">가족 모두가 아는 것으로 정하세요. 아이나 사위·며느리도 답할 수 있어야 해요. 친척이나 동네 사람도 아는 답(부고·족보·SNS에 나온 이름)은 피하는 게 좋아요.</p>
-          ${quizExamples()}
+          ${quizExamples('room')}
         </fieldset>
         <p class="fine">함께 관리할 사람(공동 그룹장)은 방을 만든 뒤 초대 코드로 지정해요.</p>
         <p class="error" id="err" hidden></p>
@@ -586,10 +620,14 @@ export async function createRoom() {
         <section class="paper done">
           <p class="stamp" data-date="${stampDate()}">완성</p>
           <h1>가족방을 만들었어요</h1>
-          <p>가족에게 사이트 주소를 알려 주세요. 각자 자기 이름과 생일로 찾아 세 질문의 답을 맞히면 들어올 수 있어요.</p>
+          <p>이제 가족에게 알려 주세요. 각자 자기 이름과 생일로 찾아 세 질문의 답을 맞히면 들어와요.</p>
+          <blockquote class="share-preview">${esc(roomShareText(title)).replace(/\n/g, '<br>')}</blockquote>
+          <button class="btn big" id="share">가족에게 보내기</button>
+          <p class="fine">답은 들어가지 않아요. 가족 단톡방에 그대로 보내도 돼요.</p>
           ${setupBlock('room')}
           <a class="btn primary big" href="#/box/${esc(id)}">가족방 열기</a>
         </section>`);
+      $('#share').addEventListener('click', () => share(roomShareText(title)));
       wireSetup({ id, access: box.access, token, content: box.content });
     } catch (e) {
       showError(createError(e, '오늘은 이 기기에서 너무 많이 만들었어요. 내일 다시 시도해 주세요.'));
