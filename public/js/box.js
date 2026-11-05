@@ -2,6 +2,7 @@ import * as C from './crypto.js';
 import { api, device, session, ApiError } from './api.js';
 import {
   $, $$, esc, render, busy, toast, ago, when, STATUS, statusOf, hasCoord, BADGE, idFields, wireIdFields,
+  kbdLink,
 } from './ui.js';
 import { setupBlock, wireSetup, recoverBlock, wireRecover } from './recovery.js';
 import { mountView, fmtCoord, mapLinks } from './map.js';
@@ -313,6 +314,7 @@ function composeBlock(ctx, { title, defaultSlot }) {
           .map(([k, s]) => `<label class="chip ${s.cls}"><input type="radio" name="status" value="${k}"> ${s.label}</label>`)
           .join('')}</div>
         <label>남길 말 <textarea name="text" rows="3" maxlength="1000" placeholder="예: 1차 장소가 막혔어. 할머니 댁으로 가는 중."></textarea></label>
+        ${kbdLink()}
         <label class="check"><input type="checkbox" name="withPlace"> 지금 있는 곳(또는 갈 곳) 남기기</label>
         <div id="cplace" hidden>${placeBlock('c', { label: '장소' })}</div>
         <button class="btn primary" type="submit">남기기</button>
@@ -423,7 +425,7 @@ function inviteBlock(ctx) {
     <details>
       <summary>그룹장 초대 코드가 있나요?</summary>
       <form id="codef" novalidate>
-        <label>초대 코드 <input name="code" autocomplete="off" autocapitalize="characters" placeholder="예: ABCD-2345"></label>
+        <label>초대 코드 <input name="code" autocomplete="off" autocapitalize="characters" data-nokbd placeholder="예: ABCD-2345"></label>
         ${
           needWho
             ? `<label>나는 누구인가요?

@@ -4,7 +4,7 @@
 
 import * as C from './crypto.js';
 import { api, device, session, ApiError } from './api.js';
-import { $, esc, busy, toast, render } from './ui.js';
+import { $, esc, busy, toast, render, kbdLink } from './ui.js';
 import { humanToken } from './human.js';
 
 const EXAMPLES = ['예: 내가 나온 초등학교 이름은?', '예: 내 외할머니 성함은?', '예: 내 첫 반려동물 이름은?'];
@@ -110,6 +110,7 @@ export async function recoverBlock(ctx, nameOf) {
     <details>
       <summary>${title}</summary>
       <form id="recf" novalidate>
+        ${kbdLink()}
         ${
           rows.length > 1
             ? `<label>나는 누구인가요? <select name="who">${rows

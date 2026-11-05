@@ -75,6 +75,9 @@ export const BADGE = {
   latest: '<span class="badge latest">제일 최근 기록</span>',
 };
 
+// 한글 자판이 없는 기기(빌린 외국 폰·PC)를 위한 화면 자판을 여는 링크. 누를 때만 kbd.js를 받는다(app.js가 받아 켠다)
+export const kbdLink = () => '<button type="button" class="kbd-open" data-kbd-open>한글 자판이 없나요? 화면 자판 열기</button>';
+
 // 생일을 아는 정도에 따라 입력 칸이 바뀌는 묶음
 // who: 누구의 정보인지 칸 이름에 붙인다(쪽지 쓰기에서 받는 사람 칸과 내 칸이 헷갈리지 않게)
 export function idFields(prefix, { required = false, who = '' } = {}) {

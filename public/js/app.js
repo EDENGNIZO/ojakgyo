@@ -1,6 +1,6 @@
 import * as C from './crypto.js';
 import { api, device, session, ApiError } from './api.js';
-import { $, $$, esc, render, busy, toast } from './ui.js';
+import { $, $$, esc, render, busy, toast, kbdLink } from './ui.js';
 // 쓰기·쪽지 보기·사람 확인 코드는 그 화면을 열 때 받는다. 첫 화면을 가볍게 하려고.
 // 서비스 워커가 첫 화면이 뜬 뒤 뒤에서 모두 받아 두므로, 그다음부터는 인터넷이 끊겨도 열린다.
 async function load(file) {
@@ -316,6 +316,7 @@ function findForm() {
       <p class="lede">내 이름과 생일로, 누군가 나에게 남긴 쪽지와 가족방을 찾습니다.</p>
       <form id="f" novalidate>
         <label>내 이름 <input name="name" autocomplete="name" maxlength="40" required placeholder="예: 김민준"></label>
+        ${kbdLink()}
         <label>내 생일 <input name="bd" inputmode="numeric" required placeholder="예: 19950314"></label>
         <details>
           <summary>더 찾아보기 <span class="opt">선택</span></summary>
@@ -567,6 +568,7 @@ function unlockView(id) {
           <label>답${all.length > 1 ? ` ${i + 1}` : ''} <input name="answer${i}" autocomplete="off" autocapitalize="off" required></label>`
           )
           .join('')}
+        ${kbdLink()}
         <p class="hint">띄어쓰기와 대소문자는 신경 쓰지 않아도 돼요.${
           questions(r.teaser.q).length > 1 ? ' 답을 모두 맞혀야 열려요.' : ''
         }</p>
@@ -807,6 +809,20 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 route();
 setTimeout(hello, 1500);
+
+// 화면 한글 자판: "화면 자판 열기"를 누를 때만 받는다. 이 탭에서 켜 두었으면(새로 고침 뒤에도) 다시 켠다.
+// 받지 못해도 쓰던 양식은 그대로 둔다(화면 코드처럼 오류 화면으로 바꾸지 않는다)
+const openKbd = (from) =>
+  import('./kbd.js')
+    .then((m) => m.enable(from))
+    .catch(() => toast('화면 자판을 불러오지 못했어요. 연결을 확인하고 다시 눌러 주세요.'));
+document.addEventListener('click', (e) => {
+  const b = e.target.closest?.('[data-kbd-open]');
+  if (b) openKbd(b);
+});
+try {
+  if (sessionStorage.getItem('findme.kbd') === '1') openKbd(null);
+} catch {}
 
 // 첫 화면을 다 받은 뒤에 등록한다. 서비스 워커가 나머지 화면을 받는 동안 첫 화면을 늦추지 않게.
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {

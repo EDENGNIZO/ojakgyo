@@ -1,6 +1,6 @@
 import * as C from './crypto.js';
 import { api, device, ApiError } from './api.js';
-import { $, $$, esc, render, busy, toast, idFields, wireIdFields, findRude, hasUrl, findContact } from './ui.js';
+import { $, $$, esc, render, busy, toast, idFields, wireIdFields, findRude, hasUrl, findContact, kbdLink } from './ui.js';
 import { setupBlock, wireSetup } from './recovery.js';
 import { mountPicker } from './map.js';
 import { preloadHuman, humanToken } from './human.js';
@@ -266,6 +266,7 @@ export async function writeNote() {
         <fieldset>
           <legend><span class="num">1</span> 받는 사람 <span class="opt">쪽지를 받을 상대</span></legend>
           <label>받는 사람 이름 <input name="toName" maxlength="40" required placeholder="예: 이서연"></label>
+          ${kbdLink()}
           ${idFields('to', { who: '받는 사람' })}
         </fieldset>
         <fieldset class="me">
@@ -496,6 +497,7 @@ export async function createRoom() {
       <form id="f" novalidate>
         <fieldset>
           <legend><span class="num">1</span> 가족방 이름</legend>
+          ${kbdLink()}
           <label>이름 <input name="title" maxlength="30" required placeholder="예: 망원동 김씨네">
             <span class="hint">찾을 때 보이는 이름이에요. 주소나 실명 대신 가족끼리 알아볼 수 있는 이름으로 정해 주세요.</span></label>
         </fieldset>
