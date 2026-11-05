@@ -80,7 +80,7 @@ export const kbdLink = () => '<button type="button" class="kbd-open" data-kbd-op
 
 // 생일을 아는 정도에 따라 입력 칸이 바뀌는 묶음
 // who: 누구의 정보인지 칸 이름에 붙인다(쪽지 쓰기에서 받는 사람 칸과 내 칸이 헷갈리지 않게)
-export function idFields(prefix, { required = false, who = '' } = {}) {
+export function idFields(prefix, { required = false, who = '', school = false } = {}) {
   const of = who ? `${who} ` : '';
   return `
     <div class="idfields" data-prefix="${prefix}">
@@ -96,7 +96,27 @@ export function idFields(prefix, { required = false, who = '' } = {}) {
       <label>${of}전화번호 <span class="opt">선택</span>
         <input name="${prefix}phone" inputmode="tel" autocomplete="off" placeholder="예: 010-1234-5678">
       </label>
+      ${school ? schoolField(prefix, of) : ''}
     </div>`;
+}
+
+// 쪽지를 쓸 때 받는 사람이 다닌 학교 하나. 생일을 몰라도, 상대가 그 학교를 넣어 찾으면 보인다
+function schoolField(prefix, of) {
+  return `
+      <div class="school-field">
+        <span class="field-name">${of}다닌 학교 <span class="opt">선택</span></span>
+        <div class="school-row">
+          <select name="${prefix}schoolKind" aria-label="학교 종류">
+            <option value="">종류</option>
+            <option value="e">초등학교</option>
+            <option value="m">중학교</option>
+            <option value="h">고등학교</option>
+            <option value="u">대학교</option>
+          </select>
+          <input name="${prefix}school" maxlength="40" autocomplete="off" placeholder="예: 서울고등학교" aria-label="학교 이름">
+        </div>
+        <span class="hint">같은 학교를 다닌 사이라면 적어 주세요. 생일을 몰라도, 상대가 이 학교를 넣어 찾으면 보여요.</span>
+      </div>`;
 }
 
 const BD_PLACEHOLDER = { full: '예: 19950314', year: '예: 1995 (앞뒤 1년까지 함께 찾아요)', md: '예: 0314', none: '' };

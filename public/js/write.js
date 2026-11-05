@@ -21,6 +21,17 @@ export function readIdFields(form, prefix) {
     if (!(out.md = C.normMonthDay(raw))) return { error: '생일 월·일을 적어 주세요. 예: 0314' };
   }
   if (phoneRaw && !(out.phone = C.normPhone(phoneRaw))) return { error: '전화번호 형식을 확인해 주세요.' };
+  const schoolRaw = form[`${prefix}school`]?.value.trim();
+  if (schoolRaw) {
+    // '서울고등학교'처럼 종류가 이름에 적혀 있으면 그 종류로 맞춘다
+    const sel = form[`${prefix}schoolKind`];
+    const kind = C.schoolKindOf(schoolRaw) || sel.value;
+    if (!kind) return { error: '학교 종류(초·중·고·대)를 골라 주세요.' };
+    sel.value = kind;
+    const name = C.normSchool(kind, schoolRaw);
+    if (!name) return { error: '학교 이름을 확인해 주세요. 예: 서울고등학교' };
+    out.school = { kind, name };
+  }
   return out;
 }
 
@@ -267,7 +278,7 @@ export async function writeNote() {
           <legend><span class="num">1</span> 받는 사람 <span class="opt">쪽지를 받을 상대</span></legend>
           <label>받는 사람 이름 <input name="toName" maxlength="40" required placeholder="예: 이서연"></label>
           ${kbdLink()}
-          ${idFields('to', { who: '받는 사람' })}
+          ${idFields('to', { who: '받는 사람', school: true })}
         </fieldset>
         <fieldset class="me">
           <legend><span class="num">2</span> 보내는 사람 <span class="opt">나</span></legend>
@@ -282,7 +293,7 @@ export async function writeNote() {
         <fieldset>
           <legend><span class="num">3</span> 쪽지</legend>
           <label>남길 말 <textarea name="text" rows="5" maxlength="2000" required
-            placeholder="예: 무슨 일이 생기면 여기서 기다릴게. 매일 정오부터 한 시간."></textarea>
+            placeholder="예: 오랜만이야. 연락이 끊겨서 여기 남겨. 이 쪽지를 보면 답장 줘."></textarea>
             <span class="hint">끝에 둘만 아는 이야기를 한 줄 더하면 상대가 진짜 나인 걸 알아봐요.</span></label>
           <label class="check"><input type="checkbox" name="withPlace"> 약속 장소도 남기기
             <span class="hint">연락이 끊겨도 만날 수 있게 장소와 시간을 정해 두세요.</span></label>
@@ -417,7 +428,7 @@ export async function writeNote() {
 }
 
 export function shareText() {
-  return `오작교: 전쟁이 나면 전화와 메신저는 끊겨도 쪽지는 남아요. 혹시 나에게 남겨진 쪽지가 있는지 확인해 보세요. ${location.origin}`;
+  return `혹시 누가 나를 찾고 있을까? 오작교에서 이름과 생일만 넣으면 나에게 남겨진 쪽지를 확인할 수 있어요. 전쟁이 나도 쪽지는 남아요. ${location.origin}`;
 }
 
 export const noteShareText = () =>

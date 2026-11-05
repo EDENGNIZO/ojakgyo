@@ -97,6 +97,19 @@ async function copySite() {
   sharePop(ok);
 }
 
+// 친구에게 알리기: 폰은 공유 창(카카오톡·문자 등)으로, 공유 창이 없으면 주소를 복사한다
+const TELL_TEXT = '혹시 누가 나를 찾고 있을까? 오작교에서 이름과 생일만 넣으면 나에게 남겨진 쪽지를 확인할 수 있어요. 연락이 끊긴 사람에게 쪽지를 남겨 둘 수도 있어요. 전쟁이 나도 쪽지는 남아요.';
+async function tell() {
+  if (navigator.share) {
+    try {
+      return await navigator.share({ text: `${TELL_TEXT} ${SITE_URL}` });
+    } catch (e) {
+      if (e?.name === 'AbortError') return; // 공유 창을 닫음
+    }
+  }
+  copySite();
+}
+
 // "find me in korea"가 붙으며 findmeinkorea.com이 되는 팝업. 외우기 쉽게
 let popTimer;
 function sharePop(ok) {
@@ -130,10 +143,10 @@ async function home() {
   const saved = device.list();
   render(`
     <section class="hero">
-      <h1>전쟁이 나면 전화와 메신저는 끊깁니다.<br>하지만 쪽지는 남습니다.</h1>
+      <h1>연락이 끊긴 그 사람도<br>나를 찾고 있을까요?</h1>
       <p class="kicker">1950년, 피난민들은 다리 난간과 벽에 쪽지를 붙였습니다.</p>
-      <p class="lede">가족과 소중한 사람에게 쪽지와 만날 곳을 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다.</p>
-      <p class="trust">회원가입 없음 · 광고 없음 · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
+      <p class="lede">연락이 끊긴 친구, 첫사랑, 헤어진 가족에게 쪽지를 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다. 전쟁이 나도 쪽지는 남습니다.</p>
+      <p class="trust">회원가입 없음 · 광고 없음 · 운영자도 못 읽음 · <a href="${SOURCE_URL}" target="_blank" rel="noopener">코드 공개</a></p>
     </section>
     <nav class="actions">
       <a class="btn primary big" href="#/find">나에게 남겨진 쪽지 확인</a>
@@ -165,11 +178,16 @@ async function home() {
         : ''
     }
     ${saved.length ? '' : demoBlock()}
+    ${saved.length ? '' : usesBlock()}
     ${saved.some((b) => b.type === 'room') ? '' : whyBlock()}
     <section class="share">
-      <h2>미리 알려 두세요</h2>
-      <p>주소는 <b>find me in korea</b>, 네 단어를 붙여 쓰면 됩니다. 평소에 가족과 소중한 사람에게 보내 두세요.</p>
-      <button type="button" class="btn" id="copySite">사이트 주소 복사하기</button>
+      <h2>주변에도 알려 주세요</h2>
+      <p>"혹시 누가 나를 찾고 있을까?" 한 번 찾아보는 사람이 많을수록, 끊어진 인연이 다시 이어질 기회도 커져요.
+        주소는 <b>find me in korea</b>, 네 단어를 붙여 쓰면 됩니다.</p>
+      <div class="row2">
+        <button type="button" class="btn primary" data-tell>친구에게 알리기</button>
+        <button type="button" class="btn" id="copySite">주소 복사하기</button>
+      </div>
     </section>
   `);
   $('#copySite').addEventListener('click', copySite);
@@ -207,6 +225,7 @@ async function home() {
 }
 
 const COUNTER_MIN = 100;
+const SCHOOL_EG = { e: '예: 망원초', m: '예: 성산중', h: '예: 서울여고', u: '예: 연세대' };
 const SOURCE_URL = 'https://github.com/EDENGNIZO/ojakgyo';
 
 // ---------- 체험용 쪽지 (서버 없이 화면 안에서만) ----------
@@ -214,11 +233,13 @@ const SOURCE_URL = 'https://github.com/EDENGNIZO/ojakgyo';
 const DEMO_ANSWER = '왕만두';
 const FAQ = [
   ['상대에게 미리 알려야 하나요?', '알려도 되고, 몰래 남겨 둬도 돼요. 상대가 언젠가 자기 이름과 생일로 찾으면 보여요.'],
-  ['상대 생일을 정확히 몰라요.', '출생연도나 월·일만 알아도 남길 수 있어요. 전화번호를 함께 적으면 더 정확히 찾아요.'],
+  ['상대 생일을 정확히 몰라요.', '출생연도나 월·일만 알아도 남길 수 있어요. 생일을 전혀 몰라도 같이 다닌 학교나 전화번호를 적으면, 상대가 그것을 넣어 찾을 때 보여요.'],
   ['회원가입이 필요한가요?', '아니요. 이름과 생일, 둘만 아는 질문이면 충분해요.'],
   ['쪽지는 언제까지 남나요?', '지우기 전까지 계속 남아요. 만날 곳이 바뀌면 같은 쪽지에 이어서 남길 수 있어요.'],
   ['폰을 잃어버리면요?', '다른 폰에서 이름과 생일로 다시 찾아 답을 넣으면 돼요.'],
   ['운영자는 쪽지를 볼 수 있나요?', '볼 수 없어요. 쪽지는 내 폰 안에서 잠긴 채로 서버에 가요. <a href="#/about">쪽지는 어떻게 지켜지나요?</a>'],
+  ['전쟁이 나도 쪽지가 남나요?', '쪽지는 국내 메신저가 아니라 해외 사업자 Cloudflare의 서버에 암호문으로 보관돼요. 국내 전화와 메신저가 멈춰도 지워지지 않고, 인터넷이 닿는 곳이면 어디서든 열 수 있어요. 인터넷이 끊긴 곳에서는 열 수 없으니 만날 곳은 미리 정해 두세요.'],
+  ['내가 찾는 사람이 이 사이트를 모르면요?', '언젠가 "혹시 누가 나를 찾을까?" 하고 찾아오면 그때 보여요. 주변에 알릴수록 그날이 빨라져요.'],
 ];
 
 function demoBlock() {
@@ -292,12 +313,28 @@ function wireDemo() {
   });
 }
 
+// 누구에게 남기나: 끊어진 인연. 다시 이어질지는 받는 사람이 정한다
+function usesBlock() {
+  return `
+    <section class="why uses">
+      <h2>다시 닿고 싶은 사람이 있나요?</h2>
+      <ul class="points">
+        <li><b>연락이 끊긴 친구·동창</b> · 번호가 바뀌어도 이름과 다닌 학교는 그대로예요</li>
+        <li><b>첫사랑·짝사랑</b> · 💌 맞쪽지는 서로에게 써야만 열려요. 거절당할 걱정 없이</li>
+        <li><b>헤어진 가족·고마운 선생님</b> · 둘만 아는 질문으로 진짜 그 사람인지 알아봐요</li>
+      </ul>
+      <p class="fine">다시 이어질지는 받는 사람이 정해요. 받는 사람이 답장하거나 그 기기를 기억하기 전에는, 보낸 사람은 쪽지가 열렸는지도 알 수 없어요.</p>
+      <a class="btn primary" href="#/write">쪽지 남기기</a>
+    </section>`;
+}
+
 // 왜 지금인가: 멀게 느껴지는 전쟁 대신 이미 겪은 날
 function whyBlock() {
   return `
     <section class="why">
       <h2>그날, 가족과 만날 곳을 정해 두셨나요?</h2>
-      <p>2022년 10월 15일엔 카카오톡이 멈췄고, 2023년 5월 31일 아침엔 서울에 경계경보 문자가 울렸습니다. 연락이 끊기면 미리 해 둔 약속만 남습니다.</p>
+      <p>2022년 10월 15일엔 카카오톡이 멈췄고, 2023년 5월 31일 아침엔 서울에 경계경보 문자가 울렸습니다. 연락이 끊기면 미리 해 둔 약속만 남습니다.
+        전쟁이 나서 전화와 메신저가 끊겨도, 오작교의 쪽지는 남습니다.</p>
       <ul class="points">
         <li>가족 모두가 같은 <b>집결지</b>를 봐요</li>
         <li>각자 <b>"무사해요"</b> 같은 안부를 남겨요</li>
@@ -313,14 +350,24 @@ function findForm() {
   render(`
     <section class="paper">
       <h1>나에게 남겨진 쪽지 확인</h1>
-      <p class="lede">내 이름과 생일로, 누군가 나에게 남긴 쪽지와 가족방을 찾습니다.</p>
+      <p class="lede">내 이름과 생일로, 누군가 나에게 남긴 쪽지와 가족방을 찾습니다.
+        전화번호나 다닌 학교를 더 넣으면, 내 생일을 모르는 사람이 남긴 쪽지도 찾을 수 있어요.</p>
       <form id="f" novalidate>
         <label>내 이름 <input name="name" autocomplete="name" maxlength="40" required placeholder="예: 김민준"></label>
         ${kbdLink()}
         <label>내 생일 <input name="bd" inputmode="numeric" required placeholder="예: 19950314"></label>
-        <details>
+        <details open>
           <summary>더 찾아보기 <span class="opt">선택</span></summary>
           <label>내 전화번호 <input name="phone" inputmode="tel" placeholder="예: 010-1234-5678"></label>
+          <div class="school-field">
+            <span class="field-name">다닌 학교 <span class="opt">아는 곳만</span></span>
+            <div class="school-grid">
+              ${Object.entries(C.SCHOOL)
+                .map(([k, label]) => `<label>${label} <input name="school_${k}" maxlength="40" autocomplete="off" placeholder="${SCHOOL_EG[k]}"></label>`)
+                .join('')}
+            </div>
+            <span class="hint">끝의 '초·중·고·대'는 붙여도 빼도 같아요. 상대가 내 생일을 몰라도 같은 학교를 적어 남겼다면 보여요.</span>
+          </div>
           <label>혹시 남겼을 것 같은 사람 이름
             <input name="from" maxlength="40" placeholder="예: 이서연">
             <span class="hint">상대가 내 생일을 몰랐거나 맞쪽지를 보냈다면, 이 이름으로 찾아야 보여요.</span>
@@ -353,13 +400,24 @@ function findForm() {
     const ymd = C.normDate(f.bd.value);
     const phone = f.phone.value.trim() ? C.normPhone(f.phone.value) : null;
     const fromName = f.from.value.trim();
+    const schools = [];
+    let badSchool = null;
+    for (const k of Object.keys(C.SCHOOL)) {
+      const raw = f[`school_${k}`].value.trim();
+      if (!raw) continue;
+      const n = C.normSchool(k, raw);
+      if (n) schools.push({ kind: k, name: n });
+      else badSchool ||= C.SCHOOL[k];
+    }
     const problem = !name
       ? '이름을 적어 주세요.'
       : !ymd
         ? '생일을 8자리 숫자로 적어 주세요. 예: 19950314'
         : f.phone.value.trim() && !phone
           ? '전화번호 형식을 확인해 주세요.'
-          : null;
+          : badSchool
+            ? `${badSchool} 이름을 확인해 주세요.`
+            : null;
     if (problem) {
       err.textContent = problem;
       err.hidden = false;
@@ -370,9 +428,9 @@ function findForm() {
     try {
       // 남이 알기 어려운 문(전화번호·보낸 사람 이름)을 먼저 보낸다. 서버는 앞에 있는 문의 쪽지부터 담는다.
       // 이름·생일은 유명인처럼 널리 알려져 있을 수 있다.
-      const first = ['phone', 'pair', 'full', 'sent'];
+      const first = ['phone', 'pair', 'school', 'full', 'sent'];
       const pos = (l) => (first.includes(l) ? first.indexOf(l) : first.length);
-      const ids = C.searcherIdentities({ name, ymd, phone, fromName }).sort(([a], [b]) => pos(a) - pos(b));
+      const ids = C.searcherIdentities({ name, ymd, phone, fromName, schools }).sort(([a], [b]) => pos(a) - pos(b));
       const doors = await Promise.all(ids.map(async ([level, s]) => ({ level, ...(await C.door(s)) })));
       let res;
       try {
@@ -515,11 +573,13 @@ function results() {
              }`
           : `<div class="paper empty">
                <p><b>${hidden.length ? '보이는 쪽지가 없어요.' : '아직 남겨진 쪽지가 없어요.'}</b></p>
-               <p>누군가 남기면 여기서 볼 수 있어요. 기다리는 대신 내가 먼저 남겨 두면, 상대도 나를 찾을 수 있어요.</p>
+               <p>찾고 싶은 사람이 있다면 먼저 남겨 두세요. 그 사람도 언젠가 "혹시 누가 나를 찾을까?" 하고 찾아오면 내 쪽지가 보여요.
+                 서로 마음이 같을 때만 열리는 💌 맞쪽지도 있어요.</p>
                <div class="row2">
                  <a class="btn primary" href="#/write">쪽지 남기기</a>
-                 <a class="btn" href="#/room/new">가족방 만들기</a>
+                 <button type="button" class="btn" data-tell>친구에게 알리기</button>
                </div>
+               <p class="fine">가족과 만날 곳을 정해 두려면 <a href="#/room/new">가족방 만들기</a></p>
              </div>`
       }
       ${
@@ -656,12 +716,12 @@ function about() {
       <ul>
         <li><b>기기에서 잠근다.</b> 메시지, 약속 장소, 보낸 사람 이름은 브라우저 안에서 암호화된 뒤에 보내집니다. 서버는 처음부터 끝까지 암호문만 다룹니다(종단간 암호화).</li>
         <li><b>열쇠는 서버에 없다.</b> 서버는 답도, 답에서 만든 열쇠도 받지 않습니다. 받는 것은 답이 맞는지 가려 줄 뿐 답으로 되돌릴 수 없는 확인값 하나입니다.</li>
-        <li><b>누구의 쪽지인지도 모른다.</b> 이름·생일·전화번호는 기기에서 한 방향으로만 계산한 값으로 서버에 닿습니다. 서버는 두 값이 같은지만 비교할 수 있고, 원래 이름을 되살릴 수 없습니다.</li>
+        <li><b>누구의 쪽지인지도 모른다.</b> 이름·생일·전화번호·학교는 기기에서 한 방향으로만 계산한 값으로 서버에 닿습니다. 서버는 두 값이 같은지만 비교할 수 있고, 원래 이름을 되살릴 수 없습니다.</li>
       </ul>
 
       <h2>서버에 남는 것과 남지 않는 것</h2>
       <ul>
-        <li><b>남지 않는 것</b>: 이름, 생일, 전화번호, 질문, 답, 메시지, 약속 장소, IP 주소의 원래 값.</li>
+        <li><b>남지 않는 것</b>: 이름, 생일, 전화번호, 학교, 질문, 답, 메시지, 약속 장소, IP 주소의 원래 값.</li>
         <li><b>남는 것</b>: 기기에서 계산한 되돌릴 수 없는 값, 잠긴 글(암호문), 쪽지를 만든 시각과 마지막 기록 시각.</li>
       </ul>
       <p>운영자도 같은 처지입니다. 저장소를 통째로 열어 봐도 보이는 것은 알아볼 수 없는 값과 암호문뿐이라,
@@ -695,8 +755,9 @@ function about() {
 
       <h2>누가 무엇을 볼 수 있나요?</h2>
       <ul>
-        <li>받는 사람의 이름과 생일을 아는 사람은 <b>쪽지가 있다는 사실과 질문</b>까지 볼 수 있습니다. 질문에는 이름이나 속마음이 드러나지 않게 써 주세요.</li>
+        <li>받는 사람의 이름과 생일(학교를 적었다면 이름과 학교)을 아는 사람은 <b>쪽지가 있다는 사실과 질문</b>까지 볼 수 있습니다. 질문에는 이름이나 속마음이 드러나지 않게 써 주세요.</li>
         <li><b>답을 맞힌 사람만</b> 보낸 사람, 메시지, 약속 장소, 마지막 기록을 볼 수 있습니다.</li>
+        <li>받는 사람이 쪽지를 열어도 <b>답장하거나 그 기기를 기억하기 전에는</b> 보낸 사람에게 아무것도 알려지지 않습니다. 다시 이어질지는 받는 사람이 정합니다.</li>
         <li>가족방의 집결지는 <b>그룹장만</b> 바꿀 수 있습니다. 답을 알아낸 사람도 가짜 집결지를 올릴 수 없습니다.</li>
         <li><b>💌 맞쪽지</b>는 상대가 내 이름과 출생연도까지 알고 나에게 쪽지를 쓰기 전까지 검색에 나타나지 않고, 숨어 있는 동안은 답을 알아도 열 수 없습니다.
           서버는 이름을 모른 채 계산값이 같은지만 봅니다.</li>
@@ -705,13 +766,19 @@ function about() {
 
       <h2>개인정보 처리</h2>
       <ul>
-        <li>이름·생일·전화번호는 원문으로 받지 않습니다. 기기에서 계산한 값만 저장합니다.</li>
+        <li>이름·생일·전화번호·학교는 원문으로 받지 않습니다. 기기에서 계산한 값만 저장합니다.</li>
         <li>IP 주소는 저장하지 않습니다. 반복 시도를 세기 위해 날마다 바뀌는 해시값을 최대 하루 동안만 쓰고 지웁니다.</li>
         <li>접속 통계는 기기마다 하루 한 번 보내는 신호를 날짜별 숫자(접속 수, 국가, 유입 경로, 처음 연 화면)로만 더합니다. 누가 언제 왔는지는 남지 않습니다.</li>
         <li>데이터는 Cloudflare(해외 사업자)의 서버에 암호문으로 보관됩니다. Cloudflare는 인터넷 중계자로서 요청의 IP 주소와 시각을 봅니다.</li>
         <li>쪽지·가족방을 만들 때, 그리고 찾기나 답 시도가 비정상적으로 많을 때는 Cloudflare Turnstile로 사람인지 확인합니다. 이때 Cloudflare가 브라우저 정보를 확인하며, 오작교는 그 결과(통과 여부)만 받습니다.</li>
         <li>14세 미만 자녀는 보호자가 가족방 구성원으로 등록해 주세요.</li>
         <li>"이 기기 기억하기"를 고르면 열쇠가 이 기기 브라우저에 저장됩니다. 남의 기기에서는 고르지 마세요.</li>
+      </ul>
+      <h2>전쟁이 나도 쪽지가 남나요?</h2>
+      <ul>
+        <li><b>국내 메신저와 따로 보관됩니다.</b> 쪽지는 해외 사업자 Cloudflare의 서버에 암호문으로 보관됩니다. 국내 전화망이나 메신저가 멈춰도 쪽지는 지워지지 않습니다.</li>
+        <li><b>인터넷이 닿는 곳이면 어디서든 열립니다.</b> 다른 나라에서도, 빌린 폰이나 PC에서도 이름과 생일로 찾을 수 있습니다.</li>
+        <li><b>인터넷이 끊긴 곳에서는 열 수 없습니다.</b> 그래서 만날 곳과 시간은 미리 정해 두고, 정말 중요한 약속은 종이에도 적어 두세요.</li>
       </ul>
       <h2>누가 운영하나요?</h2>
       <p>오작교는 개인이 만들어 운영하는 민간 서비스입니다. 회원가입도 광고도 없고, 쪽지 내용은 운영자도 볼 수 없습니다.
@@ -800,7 +867,10 @@ function hello() {
   api.hello({ first: !last, ref: refSource(), route: ENTRY_ROUTE }).catch(() => {});
 }
 
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange', () => {
+  $('#share-pop')?.remove(); // 주소 복사 팝업은 그 화면에서만
+  route();
+});
 window.addEventListener('error', () => busy());
 window.addEventListener('unhandledrejection', (e) => {
   busy();
@@ -819,6 +889,7 @@ const openKbd = (from) =>
 document.addEventListener('click', (e) => {
   const b = e.target.closest?.('[data-kbd-open]');
   if (b) openKbd(b);
+  if (e.target.closest?.('[data-tell]')) tell();
 });
 // 링크를 눌러도 쓰던 칸에서 커서가 빠지지 않게 한다. 그래야 자판이 켜질 때 그 칸을 놓았다가 다시 잡아 기기 자판을 내릴 수 있다
 document.addEventListener('mousedown', (e) => {

@@ -141,6 +141,7 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 .btn .sub { font-weight: 400; font-size: .9375rem; opacity: .85; }
 .btn.wide { width: 100%; margin-top: 4px; }
 .empty .row2 { margin-top: 16px; }
+.empty .row2 + .fine { margin: 14px 0 0; }
 .saved h2 { margin-top: 4px; }
 
 /* 버튼: 모두 48px 이상 */
@@ -200,6 +201,14 @@ details > summary::before {
 }
 details[open] > summary::before { transform: rotate(45deg); }
 .idfields { display: grid; gap: 10px; }
+/* 다닌 학교: 쪽지 쓰기는 종류 + 이름 한 줄, 찾기는 초·중·고·대 네 칸 */
+.school-field { display: grid; gap: 6px; }
+.field-name { font-weight: 700; }
+.school-row { display: grid; grid-template-columns: minmax(104px, 36%) 1fr; gap: 8px; }
+.school-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.school-grid label { gap: 4px; font-weight: 600; font-size: .9375rem; }
+/* 접었다 펴는 칸 안의 입력들도 양식처럼 띄운다 */
+form details > :not(summary) + :not(summary) { margin-top: 16px; }
 .member-row { border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: grid; gap: 10px; background: var(--paper); }
 .error { color: var(--warn); font-weight: 700; margin: 0; }
 .warn-line, .banner { background: var(--warn-bg); color: var(--warn); border-radius: 10px; padding: 12px 14px; font-size: 1rem; margin: 6px 0; }

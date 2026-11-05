@@ -121,6 +121,37 @@ export function normPhone(s) {
   return /^01\d{8,9}$/.test(d) ? d : null;
 }
 
+// 학교: 종류(초·중·고·대)는 따로 고르니, 이름 끝의 '초등학교·초', '고등학교·고교·고' 같은 말은 떼고 비교한다.
+// '망원초'와 '망원초등학교', '서울여고'와 '서울여자고등학교', '한국외대'와 '한국외국어대학교'가 같은 문이 된다
+export const SCHOOL = { e: '초등학교', m: '중학교', h: '고등학교', u: '대학교' };
+const SCHOOL_TAIL = {
+  e: /(초등학교|국민학교|초교|초)$/,
+  m: /(중학교|중)$/,
+  h: /(고등학교|고교|고)$/,
+  u: /(대학교|대학|대)$/,
+};
+// 줄여 부르는 말 (여자고등학교 → 여고, 외국어고등학교 → 외고, 교육대학교 → 교대)
+const SCHOOL_SHORT = { 여자: '여', 남자: '남', 외국어: '외', 예술: '예', 체육: '체', 공업: '공', 상업: '상', 교육: '교' };
+export function normSchool(kind, s) {
+  if (!SCHOOL[kind]) return null;
+  const t = (s || '')
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[\s​-‍⁠﻿.,·\-_()]/g, '')
+    .replace(SCHOOL_TAIL[kind], '')
+    .replace(/(여자|남자|외국어|예술|체육|공업|상업|교육)$/, (w) => SCHOOL_SHORT[w]);
+  return t.length >= 1 && t.length <= 30 ? t : null;
+}
+// 이름 끝에 '고등학교'처럼 종류가 분명히 적혀 있으면 그 종류 (줄임말 '고'·'대'는 이름의 일부일 수 있어 보지 않는다)
+export function schoolKindOf(s) {
+  const t = (s || '').replace(/\s/g, '');
+  if (/(초등학교|국민학교|초교)$/.test(t)) return 'e';
+  if (/중학교$/.test(t)) return 'm';
+  if (/(고등학교|고교)$/.test(t)) return 'h';
+  if (/대학교$/.test(t)) return 'u';
+  return null;
+}
+
 // 답 비교: 띄어쓰기(보이지 않는 공백 포함)·대소문자·문장부호는 무시
 export function normAnswer(s) {
   return (s || '')
@@ -135,6 +166,7 @@ export function normAnswer(s) {
 export const LEVEL = {
   full: '생일까지 일치',
   phone: '전화번호 일치',
+  school: '학교 일치',
   year: '출생연도 일치',
   md: '생일(월·일) 일치',
   pair: '이름 일치',
@@ -146,6 +178,8 @@ export const identity = {
   year: (name, y) => `year|${normName(name)}|${y}`,
   md: (name, md) => `md|${normName(name)}|${md}`,
   phone: (name, p) => `phone|${normName(name)}|${p}`,
+  // 생일을 몰라도 같은 학교를 다닌 사이라면 (school: normSchool을 거친 { kind, name })
+  school: (name, s) => `school|${normName(name)}|${s.kind}|${s.name}`,
   pair: (to, from) => `pair|${normName(to)}|${normName(from)}`,
   // 보낸 사람이 폰을 바꿔도 자기 쪽지를 찾을 수 있게 (보낸 사람이 생일을 적었을 때만)
   sent: (from, ymd) => `sent|${normName(from)}|${ymd}`,
@@ -168,6 +202,7 @@ export function writerIdentities(to, fromName) {
   }
   if (!to.ymd && to.md) ids.push(['md', identity.md(to.name, to.md)]);
   if (to.phone) ids.push(['phone', identity.phone(to.name, to.phone)]);
+  if (to.school) ids.push(['school', identity.school(to.name, to.school)]);
   if (fromName) ids.push(['pair', identity.pair(to.name, fromName)]);
   return ids;
 }
@@ -180,6 +215,7 @@ export function searcherIdentities(me) {
     ['md', identity.md(me.name, me.ymd.slice(4))],
   ];
   if (me.phone) ids.push(['phone', identity.phone(me.name, me.phone)]);
+  for (const s of me.schools || []) ids.push(['school', identity.school(me.name, s)]);
   if (me.fromName) ids.push(['pair', identity.pair(me.name, me.fromName)]);
   ids.push(['sent', identity.sent(me.name, me.ymd)]);
   return ids;

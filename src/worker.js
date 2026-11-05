@@ -17,7 +17,8 @@ const LIMITS = {
   findPerIpPerHour: 40,       // 넘으면 사람 확인(Turnstile)을 거쳐야 계속 찾을 수 있다
   findHumanPerIpPerHour: 600, // 사람 확인을 거쳐도 넘을 수 없는 한도
   findPerDoor: 8,             // 찾기 결과에 문 하나에서 담는 쪽지 수(최근 것부터)
-  findResults: 48,            // 찾기 결과 전체 한도 (찾는 사람이 보내는 문 6개 × 8)
+  findDoors: 12,              // 찾는 사람이 한 번에 두드리는 문: 생일 3·전화·이름쌍·보낸 사람 + 학교 4곳(초·중·고·대) = 10, 여유 2
+  findResults: 80,            // 찾기 결과 전체 한도 (문 10개 × 8)
   createPerIpPerDay: 50,      // 쪽지·가족방 합쳐 하루 50개 (스팸 방지, 대피소처럼 IP를 같이 쓰는 곳 감안). 한국 시간 자정에 다시 채워진다
   postPerIpPerDay: 1000,
   newPostsPerBoxPerDay: 100,  // 기억되지 않은 기기의 글은 방마다 하루 100개까지 (도배 방지)
@@ -295,7 +296,7 @@ async function stats(request, env, ctx) {
 async function find(request, env, busy) {
   const body = await readBody(request);
   const doors = body?.doors;
-  if (!Array.isArray(doors) || doors.length === 0 || doors.length > 8 || !doors.every((d) => isHex(d))) {
+  if (!Array.isArray(doors) || doors.length === 0 || doors.length > LIMITS.findDoors || !doors.every((d) => isHex(d))) {
     return fail(400, 'bad_request');
   }
   const ip = await ipKey(request);
