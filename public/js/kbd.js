@@ -154,21 +154,50 @@ function build() {
   panel.setAttribute('role', 'group');
   panel.setAttribute('aria-label', '화면 한글 자판');
   // 자판을 눌러도 글자 칸에서 커서가 빠져나가지 않게
-  panel.addEventListener('pointerdown', (e) => e.preventDefault());
   panel.addEventListener('mousedown', (e) => e.preventDefault());
-  // 손가락은 뗄 때 바로 쓴다. 꾹 오래 눌러도 써지게 (아이폰·안드로이드는 오래 누르면 click을 보내지 않는다)
-  // 손가락 뒤에 따라오는 click은 막는다. 닫기로 자판이 사라진 자리 아래의 버튼이 눌리지 않게
+  // 손가락: 닿는 순간 어느 글쇠인지 정해 두고, 뗄 때 쓴다 (빠르게 쳐도 빠지지 않게)
+  // - 누르는 동안 손가락이 조금 미끄러져도 쓴다. 자판 위에서는 화면이 밀리지 않는다(touch-action: none)
+  // - 앞 손가락을 떼기 전에 다음 글쇠를 누르면(두 엄지로 빠르게) 앞 글쇠를 먼저 쓴다. 누른 차례대로
+  // - 글쇠 사이 틈이나 줄 끝을 눌러도 가장 가까운 글쇠로
+  // - 꾹 오래 눌러도 한 번 (아이폰·안드로이드는 오래 누르면 click을 보내지 않는다)
+  // - 손가락 뒤에 따라오는 click은 막는다. 닫기로 자판이 사라진 자리 아래의 버튼이 눌리지 않게
+  const box = panel;
+  const downs = new Map(); // 누르고 있는 손가락 → { k, b, x, y }
   let touchedAt = 0;
-  if ('PointerEvent' in window) {
-    panel.addEventListener('pointerup', (e) => {
-      if (e.pointerType === 'mouse') return;
-      touchedAt = Date.now();
-      onKey(e);
-    });
-    panel.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
-  }
-  panel.addEventListener('click', (e) => {
-    if (Date.now() - touchedAt > 800) onKey(e); // 마우스·키보드로 누른 것 (손가락은 위에서 이미 썼다)
+  const lift = (id, type) => {
+    const d = downs.get(id);
+    if (!d) return;
+    downs.delete(id);
+    d.b.classList.remove('down');
+    if (type && !box.hidden) press(d.k);
+  };
+  box.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (e.pointerType === 'mouse') return;
+    touchedAt = Date.now();
+    for (const id of [...downs.keys()]) lift(id, true);
+    if (panel !== box || box.hidden) return; // 앞 글쇠가 닫기·↵(다음 칸이 숫자 칸)였다
+    const b = keyNear(box, e);
+    if (!b) return;
+    try {
+      box.setPointerCapture(e.pointerId); // ⇧로 글쇠가 다시 그려져도 뗀 것을 놓치지 않게
+    } catch {}
+    b.classList.add('down');
+    downs.set(e.pointerId, { k: b.dataset.k, b, x: e.clientX, y: e.clientY });
+  });
+  box.addEventListener('pointerup', (e) => {
+    if (e.pointerType === 'mouse') return;
+    touchedAt = Date.now();
+    const d = downs.get(e.pointerId);
+    // 한 글쇠 넘게 쓸어 넘긴 것은 누른 것으로 보지 않는다
+    if (d) lift(e.pointerId, Math.hypot(e.clientX - d.x, e.clientY - d.y) < 48);
+  });
+  box.addEventListener('pointercancel', (e) => lift(e.pointerId, false));
+  if ('PointerEvent' in window) box.addEventListener('touchend', (e) => e.preventDefault(), { passive: false });
+  box.addEventListener('click', (e) => {
+    // 마우스·키보드로 누른 것 (손가락은 위에서 이미 썼다)
+    const b = e.target.closest('[data-k]');
+    if (b && Date.now() - touchedAt > 800) press(b.dataset.k);
   });
   panel.addEventListener('contextmenu', (e) => e.preventDefault());
   document.body.append(panel);
@@ -255,10 +284,24 @@ function enter(el) {
   else form.requestSubmit();
 }
 
-function onKey(e) {
-  const b = e.target.closest('[data-k]');
-  if (!b) return;
-  const k = b.dataset.k;
+// 손가락이 닿은 글쇠. 글쇠 사이 틈이면 같은 줄에서 가장 가까운 글쇠
+function keyNear(box, e) {
+  const hit = e.target.closest?.('[data-k]');
+  if (hit && box.contains(hit)) return hit;
+  let best = null;
+  let far = Infinity;
+  for (const b of box.querySelectorAll('.kbd-row [data-k]')) { // 닫기는 바로 눌렀을 때만
+    const r = b.getBoundingClientRect();
+    const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+    const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+    if (dy > 6) continue; // 줄 사이 틈까지만. 자판 위 글씨 자리를 눌러서는 쓰지 않는다
+    const d = dx * dx + dy * dy;
+    if (d < far) [best, far] = [b, d];
+  }
+  return best;
+}
+
+function press(k) {
   if (k === 'close') return disable();
   if (k === 'shift' || k === 'layer') {
     if (k === 'shift') shift = !shift;
