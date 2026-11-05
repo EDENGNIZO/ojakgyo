@@ -13,7 +13,6 @@
     "esbuild": "0.24.0",
     "leaflet": "^1.9.4",
     "puppeteer-core": "25.13.0",
-    "qrcode": "^1.5.4",
     "wrangler": "4.156.1"
   }
 }

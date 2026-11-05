@@ -67,40 +67,6 @@ async function peekNews(saved) {
   } catch {}
 }
 
-// ---------- 후원 ----------
-// 카카오페이 송금코드(https://qr.kakaopay.com/…)와 토스아이디(https://toss.me/아이디) 링크. 둘 다 비어 있으면 후원 묶음을 보여 주지 않는다.
-// qr은 링크를 QR로 만든 정적 그림(node scripts/qr.mjs '링크' public/qr-kakaopay.svg). 링크를 바꾸면 QR도 다시 만든다.
-// 그냥 링크와 그림이라 새 스크립트·CSP 변경이 없다. 쓰임새 문구는 일부러 적지 않는다.
-const SUPPORT = {
-  kakao: 'https://qr.kakaopay.com/Ej9NDsbHF',
-  qr: '/qr-kakaopay.svg',
-  toss: '',
-};
-
-// 엽서 위에 붙인 우표(QR). 오작교 전설(까치들이 한 마리씩 모여 놓은 다리)에 빗대어, 대놓고 바라는 말은 쓰지 않는다
-function supportBlock() {
-  if (!SUPPORT.toss && !SUPPORT.kakao) return '';
-  const link = (href, label) => (href ? `<a class="btn" href="${esc(href)}" target="_blank" rel="noopener">${label}</a>` : '');
-  const stamp =
-    SUPPORT.kakao && SUPPORT.qr
-      ? `<a class="pc-stamp" href="${esc(SUPPORT.kakao)}" target="_blank" rel="noopener" aria-label="카카오페이 송금 QR 코드">
-          <img src="${esc(SUPPORT.qr)}" alt="" width="96" height="96" loading="lazy"><span>카카오페이</span></a>`
-      : '';
-  return `
-    <section class="support">
-      <div class="postcard">
-        <div class="pc-text">
-          <p class="kicker">까치 한 마리 보태기</p>
-          <h2>오작교는 까치들이 한 마리씩 모여 놓은 다리예요</h2>
-          <p>마음이 닿았다면 까치 한 마리를 보태 주세요. 금액은 자유예요.</p>
-        </div>
-        ${stamp}
-        <div class="pc-actions">${link(SUPPORT.kakao, '카카오페이로 보태기')}${link(SUPPORT.toss, '토스로 보태기')}</div>
-      </div>
-      ${stamp ? '<p class="fine">우표의 QR은 다른 폰 카메라로 찍어도 바로 열려요.</p>' : ''}
-    </section>`;
-}
-
 // ---------- 사이트 주소 복사 ----------
 
 const SITE_URL = 'https://findmeinkorea.com';
@@ -164,7 +130,6 @@ async function home() {
   const saved = device.list();
   render(`
     <section class="hero">
-      ${BRIDGE}
       <h1>전쟁이 나면 전화와 메신저는 끊깁니다.<br>하지만 쪽지는 남습니다.</h1>
       <p class="kicker">1950년, 피난민들은 다리 난간과 벽에 쪽지를 붙였습니다.</p>
       <p class="lede">가족과 소중한 사람에게 쪽지와 만날 곳을 남겨 두세요. 상대는 <b>자기 이름과 생일</b>만으로 찾아옵니다.</p>
@@ -206,7 +171,6 @@ async function home() {
       <p>주소는 <b>find me in korea</b>, 네 단어를 붙여 쓰면 됩니다. 평소에 가족과 소중한 사람에게 보내 두세요.</p>
       <button type="button" class="btn" id="copySite">사이트 주소 복사하기</button>
     </section>
-    ${supportBlock()}
   `);
   $('#copySite').addEventListener('click', copySite);
   wireDemo();
@@ -244,19 +208,6 @@ async function home() {
 
 const COUNTER_MIN = 100;
 const SOURCE_URL = 'https://github.com/EDENGNIZO/ojakgyo';
-
-// 첫 화면 그림: 견우·직녀 두 별 사이에 까치들이 놓은 다리. 선 몇 줄이라 따로 받을 파일이 없다
-const BRIDGE = (() => {
-  const birds = [[54, 48], [81, 40], [107, 33], [134, 29], [160, 28], [186, 29], [213, 33], [239, 40], [266, 48]]
-    .map(([x, y], i) => {
-      const w = i % 2 ? 5 : 6;
-      return `<path style="--i:${i}" d="M${x - 9} ${y}q4.5-${w} 9 0q4.5-${w} 9 0"/>`;
-    })
-    .join('');
-  const star = (x) => `<path transform="translate(${x} 62)" d="M0-6L1.6-1.6L6 0L1.6 1.6L0 6L-1.6 1.6L-6 0L-1.6-1.6Z"/>`;
-  return `<svg class="bridge" viewBox="0 0 320 72" aria-hidden="true" focusable="false">
-    <path class="b-arc" d="M28 64Q160 0 292 64"/><g class="b-birds">${birds}</g><g class="b-stars">${star(14)}${star(306)}</g></svg>`;
-})();
 
 // ---------- 체험용 쪽지 (서버 없이 화면 안에서만) ----------
 
@@ -784,12 +735,6 @@ async function route() {
   };
   let m;
   if (hash === '/') return home();
-  if (hash === '/support') {
-    // 바닥글의 "후원" 링크: 첫 화면의 후원 묶음으로 바로 내려간다
-    await home();
-    $('.support')?.scrollIntoView({ block: 'start' });
-    return;
-  }
   if (hash === '/find') return findForm();
   if (hash === '/results') return results();
   if (hash === '/write') return open('./write.js', 'writeNote');
@@ -862,8 +807,6 @@ window.addEventListener('unhandledrejection', (e) => {
 });
 route();
 setTimeout(hello, 1500);
-// 후원 링크가 아직 없으면 바닥글의 "후원"도 감춘다
-if (!SUPPORT.toss && !SUPPORT.kakao) $('#support-link')?.remove();
 
 // 첫 화면을 다 받은 뒤에 등록한다. 서비스 워커가 나머지 화면을 받는 동안 첫 화면을 늦추지 않게.
 if ('serviceWorker' in navigator && location.hostname !== 'localhost') {

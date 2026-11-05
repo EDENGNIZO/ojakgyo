@@ -95,14 +95,7 @@ p.caution { font-size: 1rem; margin: 0 0 14px; }
 }
 
 /* 첫 화면 */
-.hero { padding: 18px 0 0; }
-/* 견우·직녀 별 사이 까치 다리: 까치가 한 마리씩 내려앉는다 */
-.bridge { display: block; width: 100%; max-width: 300px; height: auto; margin: 0 0 10px; }
-.b-arc { fill: none; stroke: var(--line); stroke-width: 1.5; stroke-dasharray: 2 5; stroke-linecap: round; }
-.b-birds { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.b-birds path { animation: bird-in .5s cubic-bezier(.2, .75, .25, 1) both; animation-delay: calc(var(--i) * 70ms); }
-.b-stars { fill: var(--seal); }
-@keyframes bird-in { from { opacity: 0; transform: translateY(-8px); } }
+.hero { padding: 26px 0 0; }
 /* 다리 난간에 붙였던 쪽지 한 장 */
 .hero .kicker {
   position: relative; display: inline-block; margin: 4px 0 20px; padding: 12px 14px 10px;
@@ -419,30 +412,6 @@ p.q { font-family: var(--serif); font-size: 1.25rem; font-weight: 700; margin: 4
 .share { padding-top: 22px; margin-top: 8px; border-top: 1px solid var(--line); }
 .share h2 { font-size: 1.25rem; margin-top: 4px; }
 
-/* 후원: 엽서 한 장, 오른쪽 위에 우표(QR). 바라는 말 대신 전설에 빗댄다 */
-.support { margin-top: 30px; }
-.postcard {
-  display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; align-items: start;
-  padding: 20px 18px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 4px;
-  box-shadow: var(--shadow); outline: 1.5px dashed var(--line); outline-offset: -8px;
-}
-.postcard .kicker { margin: 0 0 4px; letter-spacing: .06em; }
-.postcard h2 { font-size: 1.1875rem; line-height: 1.45; margin: 0 0 .4em; }
-.postcard p { margin: 0; }
-.pc-text { min-width: 0; }
-/* 우표: 톱니 테두리, 살짝 비스듬히. 어두운 화면에서도 종이색 바탕을 유지해야 카메라가 읽는다 */
-.pc-stamp {
-  display: grid; justify-items: center; gap: 3px; margin: -4px -2px 0 0; padding: 7px 7px 5px;
-  background: #fffcf5; color: #625b4f; border: 1px dashed #8e8473; border-radius: 2px;
-  font: 600 .6875rem/1 var(--sans); letter-spacing: .04em; text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .15); transform: rotate(2.5deg);
-}
-.pc-stamp img { display: block; width: 96px; height: 96px; }
-.pc-actions { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin-top: 12px; }
-.support .fine { margin: 10px 0 0; text-align: center; }
-@media (max-width: 359px) {
-  .pc-stamp img { width: 80px; height: 80px; }
-}
 .pop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 16px; background: rgba(24, 20, 14, .5); }
 .pop-box {
   width: 100%; max-width: 360px; padding: 26px 20px 20px; border-radius: 12px;
